@@ -1,0 +1,16 @@
+{
+  "name": "Équilibre",
+  "short_name": "Équilibre",
+  "description": "Assistant de composition alimentaire quotidien",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F8F6F2",
+  "theme_color": "#F8F6F2",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%235B8C6E' width='100' height='100' rx='20'/><text x='50' y='68' text-anchor='middle' font-size='50' fill='white'>E</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
