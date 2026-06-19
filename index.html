@@ -163,6 +163,8 @@ body {
 .menu-item-line { font-size: 0.85rem; color: var(--text-secondary); padding: 2px 0; }
 .menu-totals { display: flex; gap: 16px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 0.85rem; }
 .menu-totals strong { font-weight: 700; }
+.menu-herbs { font-size: 0.82rem; color: var(--accent); font-style: italic; margin: 8px 0 2px; }
+.menu-tip { font-size: 0.78rem; color: var(--text-secondary); margin: 4px 0; line-height: 1.4; }
 .mode-selector { display: flex; gap: 6px; margin: 12px 0; flex-wrap: wrap; }
 .mode-btn { padding: 7px 14px; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 500; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
 .mode-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
@@ -393,11 +395,31 @@ const defaultFoods = [
 const presetBreakfast = { id:'petit_dej_habituel', name:'Petit-déjeuner habituel', items: [{ foodId:'toast', quantity:50 },{ foodId:'beurre', quantity:10 },{ foodId:'confiture', quantity:20 }] };
 
 const presetMenus = [
-  { id:'menu_a', name:'Menu A', meals: [
+  { id:'riz_thon_zaatar', name:'Riz froid, thon, coriandre & zaatar', meals: [{
+    name:'Repas', items:[{foodId:'riz',quantity:220},{foodId:'thon',quantity:100},{foodId:'tomates_concassees',quantity:175},{foodId:'huile_olive',quantity:5},{foodId:'citron',quantity:15},{foodId:'vinaigre',quantity:5}],
+    herbs:'Coriandre fraîche · ½ c.c. zaatar · Poivre',
+    tip:'Sale peu : le thon et le zaatar sont déjà salés.'
+  }]},
+  { id:'pois_chiches_crevettes', name:'Pois chiches, crevettes, cumin & coriandre', meals: [{
+    name:'Repas', items:[{foodId:'pois_chiches',quantity:165},{foodId:'crevettes',quantity:180},{foodId:'huile_olive',quantity:5},{foodId:'citron',quantity:15}],
+    herbs:'Coriandre fraîche · ½ c.c. cumin grillé · Option : pointe de curcuma',
+    tip:'Grille le cumin 30 s à sec, puis broie-le.'
+  }]},
+  { id:'haricots_maquereau_zaatar', name:'Haricots blancs, maquereau, aneth & zaatar', meals: [{
+    name:'Repas', items:[{foodId:'haricots_blancs',quantity:250},{foodId:'maquereau',quantity:146},{foodId:'huile_olive',quantity:5},{foodId:'citron',quantity:15},{foodId:'vinaigre',quantity:5}],
+    herbs:'Aneth · ½ c.c. zaatar · Câpres (optionnel)',
+    tip:'Pose le maquereau par-dessus pour ne pas l\'émietter. Sans huile s\'il est à l\'huile.'
+  }]},
+  { id:'lentilles_skyr_menthe', name:'Lentilles froides, skyr, menthe & cumin', meals: [{
+    name:'Repas', items:[{foodId:'lentilles',quantity:250},{foodId:'skyr',quantity:150},{foodId:'tomates_concassees',quantity:125},{foodId:'citron',quantity:15}],
+    herbs:'Menthe fraîche · Coriandre fraîche · ½ c.c. cumin grillé',
+    tip:'Mélange le skyr avec cumin, citron et herbes. Détends avec un peu d\'eau.'
+  }]},
+  { id:'menu_a', name:'Menu A — Journée type', meals: [
     { name:'Déjeuner', items:[{foodId:'poulet',quantity:150},{foodId:'riz',quantity:200},{foodId:'legumes_wok',quantity:300},{foodId:'huile_olive',quantity:10}] },
     { name:'Dîner', items:[{foodId:'sardines',quantity:92},{foodId:'pates',quantity:170},{foodId:'tomates_concassees',quantity:200},{foodId:'huile_olive',quantity:5}] }
   ]},
-  { id:'menu_b', name:'Menu B', meals: [
+  { id:'menu_b', name:'Menu B — Journée type', meals: [
     { name:'Déjeuner', items:[{foodId:'crevettes',quantity:180},{foodId:'riz',quantity:200},{foodId:'legumes_wok',quantity:300},{foodId:'huile_sesame',quantity:5}] },
     { name:'Dîner', items:[{foodId:'maquereau',quantity:146},{foodId:'haricots_blancs',quantity:200},{foodId:'tomates_concassees',quantity:200},{foodId:'huile_olive',quantity:5}] }
   ]}
@@ -601,8 +623,8 @@ function setupMenus(){
   const bfItems=presetBreakfast.items;let bfK=0,bfP=0;
   const bfL=bfItems.map(i=>{const f=getFoodById(i.foodId);if(!f)return'';const v=calcItem(f,i.quantity);bfK+=v.kcal;bfP+=v.prot;return'<div class="menu-item-line">'+f.name+' · '+i.quantity+' g · '+v.kcal+' kcal</div>';}).join('');
   let html='<div class="menu-card"><h3>Petit-déjeuner habituel</h3>'+bfL+'<div class="menu-totals"><span><strong>'+Math.round(bfK)+'</strong> kcal</span><span><strong>'+Math.round(bfP)+'</strong> g prot.</span></div><button class="btn btn-secondary btn-sm mt-8" id="btn-use-breakfast">Ajouter</button></div>';
-  for(const menu of presetMenus){let tK=0,tP=0;let mh='';for(const meal of menu.meals){mh+='<div class="menu-meal-label">'+esc(meal.name)+'</div>';for(const i of meal.items){const f=getFoodById(i.foodId);if(!f)continue;const v=calcItem(f,i.quantity);tK+=v.kcal;tP+=v.prot;mh+='<div class="menu-item-line">'+f.name+' · '+i.quantity+' g · '+v.kcal+' kcal · '+v.prot+' g prot.</div>';}}
-  html+='<div class="menu-card"><h3>'+esc(menu.name)+'</h3>'+mh+'<div class="menu-totals"><span><strong>'+Math.round(tK)+'</strong> kcal</span><span><strong>'+Math.round(tP)+'</strong> g prot.</span></div><button class="btn btn-secondary btn-sm mt-8" data-menu-id="'+menu.id+'">Utiliser ce menu</button></div>';}
+  for(const menu of presetMenus){let tK=0,tP=0;let mh='';const single=menu.meals.length===1;for(const meal of menu.meals){if(!single)mh+='<div class="menu-meal-label">'+esc(meal.name)+'</div>';for(const i of meal.items){const f=getFoodById(i.foodId);if(!f)continue;const v=calcItem(f,i.quantity);tK+=v.kcal;tP+=v.prot;mh+='<div class="menu-item-line">'+f.name+' · '+i.quantity+' g</div>';}if(meal.herbs)mh+='<div class="menu-herbs">'+esc(meal.herbs)+'</div>';if(meal.tip)mh+='<div class="menu-tip">'+esc(meal.tip)+'</div>';}
+  html+='<div class="menu-card"><h3>'+esc(menu.name)+'</h3>'+mh+'<div class="menu-totals"><span><strong>'+Math.round(tK)+'</strong> kcal</span><span><strong>'+Math.round(tP)+'</strong> g prot.</span></div><button class="btn btn-secondary btn-sm mt-8" data-menu-id="'+menu.id+'">'+(single?'Ajouter':'Utiliser ce menu')+'</button></div>';}
   c.innerHTML=html;
   document.getElementById('btn-use-breakfast')?.addEventListener('click',()=>{addBreakfast();switchView('view-today');});
   c.querySelectorAll('[data-menu-id]').forEach(b=>b.addEventListener('click',()=>{const m=presetMenus.find(x=>x.id===b.dataset.menuId);if(!m)return;for(const meal of m.meals){let tK=0,tP=0;const items=meal.items.map(i=>{const f=getFoodById(i.foodId);if(!f)return i;const v=calcItem(f,i.quantity);tK+=v.kcal;tP+=v.prot;return{foodId:i.foodId,quantity:i.quantity};});addEntry({type:'menu',name:meal.name,items,totalKcal:tK,totalProt:tP});}switchView('view-today');}));
