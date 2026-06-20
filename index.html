@@ -358,6 +358,7 @@ const categories = [
   { id: 'matieres_grasses', name: 'Matières grasses' },
   { id: 'complements', name: 'Compléments protéinés' },
   { id: 'desserts', name: 'Desserts & produits laitiers' },
+  { id: 'fromages', name: 'Fromages' },
   { id: 'condiments', name: 'Condiments' },
   { id: 'petit_dejeuner', name: 'Petit-déjeuner' },
 ];
@@ -369,7 +370,12 @@ const defaultFoods = [
   { id:'maquereau', name:'Maquereau (au naturel)', category:'proteines', kcalPer100:220, protPer100:19, defaultPortion:79, minPortion:50, maxPortion:160, state:'égoutté', packageSize:113, drainedWeight:79, adjustable:true },
   { id:'thon', name:'Thon au naturel', category:'proteines', kcalPer100:116, protPer100:26, defaultPortion:130, minPortion:56, maxPortion:200, state:'égoutté', packageSize:160, drainedWeight:130, adjustable:true },
   { id:'oeufs', name:'Œufs', category:'proteines', kcalPer100:155, protPer100:13, defaultPortion:120, minPortion:60, maxPortion:240, unitWeight:60, state:'entier', adjustable:true },
-  { id:'parmesan', name:'Parmesan', category:'proteines', kcalPer100:431, protPer100:38, defaultPortion:20, minPortion:10, maxPortion:40, adjustable:true },
+  { id:'parmesan', name:'Parmesan', category:'fromages', kcalPer100:431, protPer100:38, defaultPortion:20, minPortion:10, maxPortion:40, adjustable:true },
+  { id:'emmental', name:'Emmental', category:'fromages', kcalPer100:380, protPer100:27, defaultPortion:30, minPortion:10, maxPortion:60, adjustable:true },
+  { id:'gruyere', name:'Gruyère', category:'fromages', kcalPer100:413, protPer100:27, defaultPortion:30, minPortion:10, maxPortion:60, adjustable:true },
+  { id:'mozzarella', name:'Mozzarella', category:'fromages', kcalPer100:280, protPer100:22, defaultPortion:60, minPortion:20, maxPortion:125, adjustable:true },
+  { id:'chevre_frais', name:'Chèvre frais', category:'fromages', kcalPer100:200, protPer100:13, defaultPortion:30, minPortion:10, maxPortion:60, adjustable:true },
+  { id:'feta', name:'Feta', category:'fromages', kcalPer100:264, protPer100:14, defaultPortion:30, minPortion:10, maxPortion:80, adjustable:true },
   { id:'riz', name:'Riz', category:'feculents', kcalPer100:130, protPer100:2.7, defaultPortion:150, minPortion:50, maxPortion:300, state:'cuit', adjustable:true },
   { id:'pates', name:'Pâtes', category:'feculents', kcalPer100:131, protPer100:5, defaultPortion:120, minPortion:50, maxPortion:250, state:'cuites', adjustable:true },
   { id:'pommes_de_terre', name:'Pommes de terre', category:'feculents', kcalPer100:87, protPer100:1.9, defaultPortion:150, minPortion:50, maxPortion:350, state:'cuites', adjustable:true },
@@ -470,7 +476,7 @@ function getStep(food){if(food.unitWeight)return food.unitWeight;if(food.kcalPer
 function protRatio(f){if(!f.kcalPer100)return 0;return f.protPer100*4/f.kcalPer100*100;}
 function protClass(f){const r=protRatio(f);if(r>=25)return'prot-green';if(r>=10)return'prot-orange';return'prot-red';}
 
-const CAT_PRI=['legumes','proteines','feculents','complements','matieres_grasses','desserts','condiments','petit_dejeuner'];
+const CAT_PRI=['legumes','proteines','fromages','feculents','complements','matieres_grasses','desserts','condiments','petit_dejeuner'];
 
 function solveMeal(mealItems, budget, getFoodById, options={}) {
   const mode = options.mode || 'equilibre';
