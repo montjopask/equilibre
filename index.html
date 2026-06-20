@@ -125,6 +125,8 @@ body {
 .food-item .fi-values { text-align: right; font-size: 0.78rem; color: var(--text-secondary); flex-shrink: 0; }
 .food-item .fi-add { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--accent); color: white; font-size: 1.3rem; line-height: 1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .food-item .fi-add:active { background: var(--accent-dark, #3a7c3a); }
+.food-item .fi-del { width: 28px; height: 28px; border-radius: 50%; border: none; background: #e0e0e0; color: #888; font-size: 1.1rem; line-height: 1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.food-item .fi-del:active { background: #d32f2f; color: white; }
 .food-item.fi-added { background: #e8f5e9; transition: background 0.15s; }
 .plate-section { margin: 16px 0; }
 .plate-section h3 { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
@@ -399,6 +401,7 @@ const defaultFoods = [
   { id:'lait_ribot', name:'Lait ribot (fermenté)', category:'complements', kcalPer100:40, protPer100:3.3, defaultPortion:100, minPortion:30, maxPortion:250, adjustable:false },
   { id:'creme_fraiche', name:'Crème fraîche légère', category:'matieres_grasses', kcalPer100:170, protPer100:2.5, defaultPortion:15, minPortion:5, maxPortion:50, adjustable:false },
   { id:'chocolat_lindt_85', name:'Chocolat Lindt 85 %', category:'desserts', kcalPer100:603, protPer100:9, defaultPortion:10, minPortion:10, maxPortion:50, unitWeight:10, adjustable:false },
+  { id:'pate_cacahuetes', name:'Pâte de cacahuètes', category:'complements', kcalPer100:588, protPer100:25, defaultPortion:15, minPortion:5, maxPortion:30, adjustable:false },
   { id:'puree_fruits', name:'Purée de fruits (sans sucres aj.)', category:'desserts', kcalPer100:58, protPer100:0, defaultPortion:90, minPortion:90, maxPortion:270, unitWeight:90, adjustable:false },
   { id:'thon_huile_olive', name:'Thon blanc à l\'huile d\'olive', category:'proteines', kcalPer100:186, protPer100:25, defaultPortion:104, minPortion:50, maxPortion:210, state:'égoutté', packageSize:160, drainedWeight:104, adjustable:true },
 ];
@@ -451,6 +454,7 @@ function addEntry(entry) { const k=todayKey(), day=loadDay(k); day.date=k; entry
 function removeEntry(id) { const k=todayKey(), day=loadDay(k); day.entries=day.entries.filter(e=>e.id!==id); saveDay(day); return day; }
 function loadCustomFoods() { return _load().customFoods || []; }
 function saveCustomFood(food) { const d=_load(); if(!d.customFoods)d.customFoods=[]; const i=d.customFoods.findIndex(f=>f.id===food.id); if(i>=0)d.customFoods[i]=food; else d.customFoods.push(food); _save(d); }
+function deleteCustomFood(id) { const d=_load(); d.customFoods=(d.customFoods||[]).filter(f=>f.id!==id); _save(d); allFoods=[...defaultFoods,...loadCustomFoods()]; renderFoods(); }
 
 // ══════════════════════════════════════════
 // ENGINE
@@ -645,9 +649,10 @@ function renderFoods(filter=''){
   const c=document.getElementById('foods-list'),s=filter.toLowerCase(),gr={};
   for(const cat of categories)gr[cat.id]={name:cat.name,foods:[]};
   for(const f of allFoods){if(s&&!f.name.toLowerCase().includes(s))continue;if(gr[f.category])gr[f.category].foods.push(f);}
-  let h='';for(const cat of categories){const g=gr[cat.id];if(!g.foods.length)continue;h+='<div class="food-category-header">'+esc(g.name)+'</div>';h+=g.foods.map(f=>{const v=calcItem(f,f.defaultPortion);return'<div class="food-item" data-food-id="'+f.id+'"><div class="fi-name">'+esc(f.name)+(f.state?' <span class="fi-state">('+f.state+')</span>':'')+'</div><div class="fi-values">'+f.defaultPortion+' g · '+v.kcal+' kcal · '+v.prot+' g</div><button class="fi-add" title="Ajouter">+</button></div>';}).join('');}
+  let h='';for(const cat of categories){const g=gr[cat.id];if(!g.foods.length)continue;h+='<div class="food-category-header">'+esc(g.name)+'</div>';h+=g.foods.map(f=>{const v=calcItem(f,f.defaultPortion);return'<div class="food-item" data-food-id="'+f.id+'"><div class="fi-name">'+esc(f.name)+(f.state?' <span class="fi-state">('+f.state+')</span>':'')+'</div><div class="fi-values">'+f.defaultPortion+' g · '+v.kcal+' kcal · '+v.prot+' g</div>'+(f.custom?'<button class="fi-del" title="Supprimer">&times;</button>':'')+'<button class="fi-add" title="Ajouter">+</button></div>';}).join('');}
   c.innerHTML=h||'<div class="empty-state">Aucun aliment trouvé.</div>';
   c.querySelectorAll('.fi-add').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const el=b.closest('.food-item');addQuick(el.dataset.foodId);el.classList.add('fi-added');setTimeout(()=>el.classList.remove('fi-added'),600);}));
+  c.querySelectorAll('.fi-del').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(confirm('Supprimer cet aliment ?'))deleteCustomFood(b.closest('.food-item').dataset.foodId);}));
   const si=document.getElementById('food-search-input');si.oninput=e=>renderFoods(e.target.value);
 }
 
@@ -657,9 +662,9 @@ function setupAddFoodModal(){
   document.getElementById('close-add-food').addEventListener('click',()=>closeModal('modal-add-food'));
   document.getElementById('modal-add-food').addEventListener('click',e=>{if(e.target.classList.contains('modal-overlay'))closeModal('modal-add-food');});
   document.getElementById('btn-save-food').addEventListener('click',()=>{
-    const n=document.getElementById('new-food-name').value.trim(),k=parseFloat(document.getElementById('new-food-kcal').value),p=parseFloat(document.getElementById('new-food-prot').value),po=parseInt(document.getElementById('new-food-portion').value)||100,ca=document.getElementById('new-food-cat').value,ps=parseInt(document.getElementById('new-food-package').value)||null,dw=parseInt(document.getElementById('new-food-drained').value)||null;
+    const n=document.getElementById('new-food-name').value.trim(),k=parseFloat(document.getElementById('new-food-kcal').value),p=parseFloat(document.getElementById('new-food-prot').value),rawPo=document.getElementById('new-food-portion').value.trim(),po=parseInt(rawPo)||100,ca=document.getElementById('new-food-cat').value,ps=parseInt(document.getElementById('new-food-package').value)||null,dw=parseInt(document.getElementById('new-food-drained').value)||null;
     if(!n||isNaN(k)||isNaN(p))return;
-    const ep=dw||ps||po;
+    const ep=rawPo?po:(dw||ps||100);
     saveCustomFood({id:'custom_'+Date.now(),name:n,category:ca,kcalPer100:k,protPer100:p,defaultPortion:ep,minPortion:Math.round(ep*0.3),maxPortion:Math.round(ep*2.5),adjustable:true,custom:true,packageSize:ps,drainedWeight:dw});
     allFoods=[...defaultFoods,...loadCustomFoods()];
     ['new-food-name','new-food-kcal','new-food-prot','new-food-portion','new-food-package','new-food-drained'].forEach(x=>document.getElementById(x).value='');
