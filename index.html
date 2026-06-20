@@ -369,14 +369,14 @@ const defaultFoods = [
   { id:'pates', name:'Pâtes', category:'feculents', kcalPer100:131, protPer100:5, defaultPortion:170, minPortion:50, maxPortion:250, state:'cuites', adjustable:true },
   { id:'pommes_de_terre', name:'Pommes de terre', category:'feculents', kcalPer100:87, protPer100:1.9, defaultPortion:200, minPortion:50, maxPortion:350, state:'cuites', adjustable:true },
   { id:'pain_levain', name:'Pain au levain', category:'feculents', kcalPer100:270, protPer100:9, defaultPortion:60, minPortion:30, maxPortion:120, adjustable:true },
-  { id:'haricots_blancs', name:'Haricots blancs', category:'feculents', kcalPer100:114, protPer100:7.5, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuits', adjustable:true },
+  { id:'haricots_blancs', name:'Haricots blancs (à l\'ail)', category:'feculents', kcalPer100:70, protPer100:5.3, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuits', adjustable:true },
   { id:'haricots_rouges', name:'Haricots rouges', category:'feculents', kcalPer100:127, protPer100:8.7, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuits', adjustable:true },
   { id:'pois_chiches', name:'Pois chiches', category:'feculents', kcalPer100:164, protPer100:8.9, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuits', adjustable:true },
   { id:'lentilles', name:'Lentilles', category:'feculents', kcalPer100:116, protPer100:9, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuites', adjustable:true },
   { id:'legumes_wok', name:'Légumes pour wok (surgelés)', category:'legumes', kcalPer100:35, protPer100:2, defaultPortion:300, minPortion:150, maxPortion:400, adjustable:false },
   { id:'brocolis', name:'Brocolis', category:'legumes', kcalPer100:34, protPer100:2.8, defaultPortion:250, minPortion:150, maxPortion:400, adjustable:false },
   { id:'chou_fleur', name:'Chou-fleur', category:'legumes', kcalPer100:25, protPer100:1.9, defaultPortion:250, minPortion:150, maxPortion:400, adjustable:false },
-  { id:'tomates_concassees', name:'Tomates concassées', category:'legumes', kcalPer100:26, protPer100:1, defaultPortion:200, minPortion:50, maxPortion:400, adjustable:false },
+  { id:'tomates_concassees', name:'Pulpe de tomate', category:'legumes', kcalPer100:20, protPer100:1.3, defaultPortion:200, minPortion:50, maxPortion:400, adjustable:false },
   { id:'oignons', name:'Oignons', category:'legumes', kcalPer100:40, protPer100:1.1, defaultPortion:80, minPortion:30, maxPortion:150, adjustable:false },
   { id:'huile_olive', name:"Huile d'olive", category:'matieres_grasses', kcalPer100:884, protPer100:0, defaultPortion:10, minPortion:0, maxPortion:20, adjustable:true },
   { id:'huile_coco', name:'Huile de coco', category:'matieres_grasses', kcalPer100:862, protPer100:0, defaultPortion:10, minPortion:0, maxPortion:20, adjustable:true },
@@ -399,7 +399,7 @@ const defaultFoods = [
   { id:'lait_ribot', name:'Lait ribot (fermenté)', category:'complements', kcalPer100:40, protPer100:3.3, defaultPortion:100, minPortion:30, maxPortion:250, adjustable:false },
   { id:'creme_fraiche', name:'Crème fraîche légère', category:'matieres_grasses', kcalPer100:170, protPer100:2.5, defaultPortion:15, minPortion:5, maxPortion:50, adjustable:false },
   { id:'chocolat_lindt_85', name:'Chocolat Lindt 85 %', category:'desserts', kcalPer100:603, protPer100:9, defaultPortion:10, minPortion:10, maxPortion:50, unitWeight:10, adjustable:false },
-  { id:'puree_fruits', name:'Purée de fruits (sans sucres aj.)', category:'desserts', kcalPer100:58, protPer100:0, defaultPortion:100, minPortion:50, maxPortion:200, adjustable:false },
+  { id:'puree_fruits', name:'Purée de fruits (sans sucres aj.)', category:'desserts', kcalPer100:58, protPer100:0, defaultPortion:90, minPortion:90, maxPortion:270, unitWeight:90, adjustable:false },
   { id:'thon_huile_olive', name:'Thon blanc à l\'huile d\'olive', category:'proteines', kcalPer100:186, protPer100:25, defaultPortion:104, minPortion:50, maxPortion:210, state:'égoutté', packageSize:160, drainedWeight:104, adjustable:true },
 ];
 
@@ -417,7 +417,7 @@ const presetMenus = [
     tip:'Cumin : 30 s à sec puis broyer au mortier. Huile de coco possible à la place de l\'olive. Huile de sésame après cuisson. Ne pas resaler avant d\'avoir goûté.'
   }]},
   { id:'haricots_maquereau_zaatar', name:'Haricots blancs, maquereau, aneth, zaatar & sumac', meals: [{
-    name:'Repas', items:[{foodId:'haricots_blancs',quantity:250},{foodId:'maquereau',quantity:146},{foodId:'huile_olive',quantity:5},{foodId:'citron',quantity:15},{foodId:'vinaigre',quantity:5}],
+    name:'Repas', items:[{foodId:'haricots_blancs',quantity:250},{foodId:'maquereau',quantity:79},{foodId:'huile_olive',quantity:5},{foodId:'citron',quantity:15},{foodId:'vinaigre',quantity:5}],
     herbs:'Aneth · ½ c.c. zaatar · Pincée de sumac · Câpres (option)',
     tip:'Poser le maquereau par-dessus. Sans huile s\'il est à l\'huile. Ne pas resaler : maquereau, câpres et zaatar sont déjà salés.'
   }]},
@@ -432,7 +432,7 @@ const presetMenus = [
   ]},
   { id:'menu_b', name:'Menu B — Journée type', meals: [
     { name:'Déjeuner', items:[{foodId:'crevettes',quantity:180},{foodId:'riz',quantity:200},{foodId:'legumes_wok',quantity:300},{foodId:'huile_sesame',quantity:5}] },
-    { name:'Dîner', items:[{foodId:'maquereau',quantity:146},{foodId:'haricots_blancs',quantity:200},{foodId:'tomates_concassees',quantity:200},{foodId:'huile_olive',quantity:5}] }
+    { name:'Dîner', items:[{foodId:'maquereau',quantity:79},{foodId:'haricots_blancs',quantity:200},{foodId:'tomates_concassees',quantity:200},{foodId:'huile_olive',quantity:5}] }
   ]}
 ];
 
