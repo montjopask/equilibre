@@ -118,7 +118,10 @@ body {
 .cat-tab { flex-shrink: 0; padding: 7px 14px; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 500; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; white-space: nowrap; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
 .cat-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
 .food-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-.food-item { background: var(--surface); border-radius: var(--radius-sm); padding: 12px 14px; box-shadow: var(--shadow); cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
+.food-item { background: var(--surface); border-radius: var(--radius-sm); padding: 12px 14px; box-shadow: var(--shadow); cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background 0.15s; -webkit-tap-highlight-color: transparent; border-left: 4px solid transparent; }
+.food-item.prot-green { border-left-color: #4caf50; }
+.food-item.prot-orange { border-left-color: #ff9800; }
+.food-item.prot-red { border-left-color: #e53935; }
 .food-item:active { background: var(--accent-light); }
 .food-item .fi-name { flex: 1; font-weight: 500; font-size: 0.9rem; }
 .food-item .fi-state { font-size: 0.75rem; color: var(--text-light); }
@@ -464,6 +467,8 @@ function gaugeState(consumed, target, margin) { if(consumed<target-margin)return
 function gaugePercent(consumed, target) { if(target<=0)return 100; return Math.min(Math.round(consumed/target*100),120); }
 function clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v));}
 function getStep(food){if(food.unitWeight)return food.unitWeight;if(food.kcalPer100>=400)return 5;return 10;}
+function protRatio(f){if(!f.kcalPer100)return 0;return f.protPer100*4/f.kcalPer100*100;}
+function protClass(f){const r=protRatio(f);if(r>=25)return'prot-green';if(r>=10)return'prot-orange';return'prot-red';}
 
 const CAT_PRI=['legumes','proteines','feculents','complements','matieres_grasses','desserts','condiments','petit_dejeuner'];
 
@@ -649,7 +654,7 @@ function renderFoods(filter=''){
   const c=document.getElementById('foods-list'),s=filter.toLowerCase(),gr={};
   for(const cat of categories)gr[cat.id]={name:cat.name,foods:[]};
   for(const f of allFoods){if(s&&!f.name.toLowerCase().includes(s))continue;if(gr[f.category])gr[f.category].foods.push(f);}
-  let h='';for(const cat of categories){const g=gr[cat.id];if(!g.foods.length)continue;h+='<div class="food-category-header">'+esc(g.name)+'</div>';h+=g.foods.map(f=>{const v=calcItem(f,f.defaultPortion);return'<div class="food-item" data-food-id="'+f.id+'"><div class="fi-name">'+esc(f.name)+(f.state?' <span class="fi-state">('+f.state+')</span>':'')+'</div><div class="fi-values">'+f.defaultPortion+' g · '+v.kcal+' kcal · '+v.prot+' g</div>'+(f.custom?'<button class="fi-del" title="Supprimer">&times;</button>':'')+'<button class="fi-add" title="Ajouter">+</button></div>';}).join('');}
+  let h='';for(const cat of categories){const g=gr[cat.id];if(!g.foods.length)continue;h+='<div class="food-category-header">'+esc(g.name)+'</div>';h+=g.foods.map(f=>{const v=calcItem(f,f.defaultPortion);return'<div class="food-item '+protClass(f)+'" data-food-id="'+f.id+'"><div class="fi-name">'+esc(f.name)+(f.state?' <span class="fi-state">('+f.state+')</span>':'')+'</div><div class="fi-values">'+f.defaultPortion+' g · '+v.kcal+' kcal · '+v.prot+' g</div>'+(f.custom?'<button class="fi-del" title="Supprimer">&times;</button>':'')+'<button class="fi-add" title="Ajouter">+</button></div>';}).join('');}
   c.innerHTML=h||'<div class="empty-state">Aucun aliment trouvé.</div>';
   c.querySelectorAll('.fi-add').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const el=b.closest('.food-item');addQuick(el.dataset.foodId);el.classList.add('fi-added');setTimeout(()=>el.classList.remove('fi-added'),600);}));
   c.querySelectorAll('.fi-del').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(confirm('Supprimer cet aliment ?'))deleteCustomFood(b.closest('.food-item').dataset.foodId);}));
