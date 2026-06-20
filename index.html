@@ -123,6 +123,9 @@ body {
 .food-item .fi-name { flex: 1; font-weight: 500; font-size: 0.9rem; }
 .food-item .fi-state { font-size: 0.75rem; color: var(--text-light); }
 .food-item .fi-values { text-align: right; font-size: 0.78rem; color: var(--text-secondary); flex-shrink: 0; }
+.food-item .fi-add { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--accent); color: white; font-size: 1.3rem; line-height: 1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.food-item .fi-add:active { background: var(--accent-dark, #3a7c3a); }
+.food-item.fi-added { background: #e8f5e9; transition: background 0.15s; }
 .plate-section { margin: 16px 0; }
 .plate-section h3 { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
 .plate-item { background: var(--surface); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; box-shadow: var(--shadow); }
@@ -640,8 +643,9 @@ function renderFoods(filter=''){
   const c=document.getElementById('foods-list'),s=filter.toLowerCase(),gr={};
   for(const cat of categories)gr[cat.id]={name:cat.name,foods:[]};
   for(const f of allFoods){if(s&&!f.name.toLowerCase().includes(s))continue;if(gr[f.category])gr[f.category].foods.push(f);}
-  let h='';for(const cat of categories){const g=gr[cat.id];if(!g.foods.length)continue;h+='<div class="food-category-header">'+esc(g.name)+'</div>';h+=g.foods.map(f=>{const v=calcItem(f,f.defaultPortion);return'<div class="food-item"><div class="fi-name">'+esc(f.name)+(f.state?' <span class="fi-state">('+f.state+')</span>':'')+'</div><div class="fi-values">'+f.defaultPortion+' g · '+v.kcal+' kcal · '+v.prot+' g</div></div>';}).join('');}
+  let h='';for(const cat of categories){const g=gr[cat.id];if(!g.foods.length)continue;h+='<div class="food-category-header">'+esc(g.name)+'</div>';h+=g.foods.map(f=>{const v=calcItem(f,f.defaultPortion);return'<div class="food-item" data-food-id="'+f.id+'"><div class="fi-name">'+esc(f.name)+(f.state?' <span class="fi-state">('+f.state+')</span>':'')+'</div><div class="fi-values">'+f.defaultPortion+' g · '+v.kcal+' kcal · '+v.prot+' g</div><button class="fi-add" title="Ajouter">+</button></div>';}).join('');}
   c.innerHTML=h||'<div class="empty-state">Aucun aliment trouvé.</div>';
+  c.querySelectorAll('.fi-add').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const el=b.closest('.food-item');addQuick(el.dataset.foodId);el.classList.add('fi-added');setTimeout(()=>el.classList.remove('fi-added'),600);}));
   const si=document.getElementById('food-search-input');si.oninput=e=>renderFoods(e.target.value);
 }
 
