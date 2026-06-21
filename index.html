@@ -230,8 +230,8 @@ body {
           <div class="qo-detail">Habituel · 237 kcal</div>
         </button>
         <button class="quick-option" id="qo-external">
-          <div class="qo-title">Repas extérieur</div>
-          <div class="qo-detail">Saisie libre</div>
+          <div class="qo-title">Saisie manuelle</div>
+          <div class="qo-detail">Entrer kcal + prot.</div>
         </button>
         <button class="quick-option" id="qo-compose">
           <div class="qo-title">Composer</div>
@@ -294,8 +294,8 @@ body {
   <!-- ═══════ MODALS ═══════ -->
   <div class="modal-overlay" id="modal-external">
     <div class="modal-sheet">
-      <div class="modal-header"><h2>Repas extérieur</h2><button class="modal-close" id="close-external">&times;</button></div>
-      <div class="form-group"><label class="form-label">Nom (facultatif)</label><input class="form-input" id="ext-name" placeholder="Ex : Demi-pizza"></div>
+      <div class="modal-header"><h2>Saisie manuelle</h2><button class="modal-close" id="close-external">&times;</button></div>
+      <div class="form-group"><label class="form-label">Nom (facultatif)</label><input class="form-input" id="ext-name" placeholder="Ex : Sandwich"></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Calories</label><input class="form-input" id="ext-kcal" type="number" inputmode="numeric" placeholder="620"></div>
         <div class="form-group"><label class="form-label">Protéines (g)</label><input class="form-input" id="ext-prot" type="number" inputmode="decimal" placeholder="24"></div>
@@ -379,7 +379,7 @@ const defaultFoods = [
   { id:'chevre_frais', name:'Chèvre frais', category:'fromages', kcalPer100:200, protPer100:13, defaultPortion:30, minPortion:10, maxPortion:60, adjustable:true },
   { id:'feta', name:'Feta', category:'fromages', kcalPer100:264, protPer100:14, defaultPortion:30, minPortion:10, maxPortion:80, adjustable:true },
   { id:'riz', name:'Riz', category:'feculents', kcalPer100:130, protPer100:2.7, defaultPortion:150, minPortion:50, maxPortion:300, state:'cuit', adjustable:true },
-  { id:'pates', name:'Pâtes', category:'feculents', kcalPer100:131, protPer100:5, defaultPortion:120, minPortion:50, maxPortion:250, state:'cuites', adjustable:true },
+  { id:'pates', name:'Pâtes', category:'feculents', kcalPer100:150, protPer100:5.5, defaultPortion:120, minPortion:50, maxPortion:250, state:'cuites', adjustable:true },
   { id:'pommes_de_terre', name:'Pommes de terre', category:'feculents', kcalPer100:87, protPer100:1.9, defaultPortion:150, minPortion:50, maxPortion:350, state:'cuites', adjustable:true },
   { id:'pain_levain', name:'Pain au levain', category:'feculents', kcalPer100:270, protPer100:9, defaultPortion:60, minPortion:30, maxPortion:120, adjustable:true },
   { id:'haricots_blancs', name:'Haricots blancs (à l\'ail)', category:'feculents', kcalPer100:70, protPer100:5.3, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuits', adjustable:true },
