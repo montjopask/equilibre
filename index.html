@@ -295,10 +295,10 @@ body {
   <div class="modal-overlay" id="modal-external">
     <div class="modal-sheet">
       <div class="modal-header"><h2>Saisie manuelle</h2><button class="modal-close" id="close-external">&times;</button></div>
-      <div class="form-group"><label class="form-label">Nom (facultatif)</label><input class="form-input" id="ext-name" placeholder="Ex : Sandwich"></div>
+      <div class="form-group"><label class="form-label">Nom (facultatif)</label><input class="form-input" id="ext-name" enterkeyhint="done" placeholder="Ex : Sandwich"></div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Calories</label><input class="form-input" id="ext-kcal" type="number" inputmode="numeric" placeholder="620"></div>
-        <div class="form-group"><label class="form-label">Protéines (g)</label><input class="form-input" id="ext-prot" type="number" inputmode="decimal" placeholder="24"></div>
+        <div class="form-group"><label class="form-label">Calories</label><input class="form-input" id="ext-kcal" type="number" inputmode="numeric" enterkeyhint="done" placeholder="620"></div>
+        <div class="form-group"><label class="form-label">Protéines (g)</label><input class="form-input" id="ext-prot" type="number" inputmode="decimal" enterkeyhint="done" placeholder="24"></div>
       </div>
       <button class="btn btn-primary mt-16" id="btn-save-external">Ajouter</button>
     </div>
@@ -575,16 +575,18 @@ function addBreakfast(){
 }
 function addQuick(id){const f=getFoodById(id);if(!f)return;const v=calcItem(f,f.defaultPortion);addEntry({type:'item',name:f.name,items:[{foodId:id,quantity:f.defaultPortion}],totalKcal:v.kcal,totalProt:v.prot});renderToday();}
 
+function saveExternal(){
+  const n=document.getElementById('ext-name').value.trim()||'Repas extérieur', k=parseFloat(document.getElementById('ext-kcal').value)||0, p=parseFloat(document.getElementById('ext-prot').value)||0;
+  if(k<=0&&p<=0)return;
+  addEntry({type:'external',name:n,items:null,totalKcal:k,totalProt:p});
+  document.getElementById('ext-name').value='';document.getElementById('ext-kcal').value='';document.getElementById('ext-prot').value='';
+  closeModal('modal-external');renderToday();
+}
 function setupExternalModal(){
   document.getElementById('close-external').addEventListener('click',()=>closeModal('modal-external'));
   document.getElementById('modal-external').addEventListener('click',e=>{if(e.target.classList.contains('modal-overlay'))closeModal('modal-external');});
-  document.getElementById('btn-save-external').addEventListener('click',()=>{
-    const n=document.getElementById('ext-name').value.trim()||'Repas extérieur', k=parseFloat(document.getElementById('ext-kcal').value)||0, p=parseFloat(document.getElementById('ext-prot').value)||0;
-    if(k<=0&&p<=0)return;
-    addEntry({type:'external',name:n,items:null,totalKcal:k,totalProt:p});
-    document.getElementById('ext-name').value='';document.getElementById('ext-kcal').value='';document.getElementById('ext-prot').value='';
-    closeModal('modal-external');renderToday();
-  });
+  document.getElementById('btn-save-external').addEventListener('click',saveExternal);
+  ['ext-name','ext-kcal','ext-prot'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();saveExternal();}}));
 }
 
 function setupCompose(){
