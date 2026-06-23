@@ -359,6 +359,7 @@ const categories = [
   { id: 'complements', name: 'Compléments protéinés' },
   { id: 'desserts', name: 'Desserts & produits laitiers' },
   { id: 'fromages', name: 'Fromages' },
+  { id: 'boissons', name: 'Boissons' },
   { id: 'condiments', name: 'Condiments' },
   { id: 'petit_dejeuner', name: 'Petit-déjeuner' },
 ];
@@ -414,6 +415,7 @@ const defaultFoods = [
   { id:'lait_demi_ecreme', name:'Lait demi-écrémé', category:'desserts', kcalPer100:46, protPer100:3.2, defaultPortion:100, minPortion:30, maxPortion:250, adjustable:false },
   { id:'lait_ribot', name:'Lait ribot (fermenté)', category:'desserts', kcalPer100:40, protPer100:3.3, defaultPortion:100, minPortion:30, maxPortion:250, adjustable:false },
   { id:'lait_epeautre', name:'Lait d\'épeautre (végétal)', category:'desserts', kcalPer100:55, protPer100:1, defaultPortion:100, minPortion:30, maxPortion:250, adjustable:false },
+  { id:'kombucha', name:'Kombucha', category:'boissons', kcalPer100:17, protPer100:0, defaultPortion:330, minPortion:100, maxPortion:660, unitWeight:330, packageSize:330, adjustable:false },
   { id:'creme_fraiche', name:'Crème fraîche légère', category:'matieres_grasses', kcalPer100:170, protPer100:2.5, defaultPortion:15, minPortion:5, maxPortion:50, adjustable:false },
   { id:'chocolat_lindt_85', name:'Chocolat Lindt 85 %', category:'desserts', kcalPer100:603, protPer100:9, defaultPortion:10, minPortion:10, maxPortion:50, unitWeight:10, adjustable:false },
   { id:'pate_cacahuetes', name:'Pâte de cacahuètes', category:'complements', kcalPer100:588, protPer100:25, defaultPortion:15, minPortion:5, maxPortion:30, adjustable:false },
@@ -482,7 +484,7 @@ function getStep(food){if(food.unitWeight)return food.unitWeight;if(food.kcalPer
 function protRatio(f){if(!f.kcalPer100)return 0;return f.protPer100*4/f.kcalPer100*100;}
 function protClass(f){const r=protRatio(f);if(r>=25)return'prot-green';if(r>=10)return'prot-orange';return'prot-red';}
 
-const CAT_PRI=['legumes','proteines','fromages','feculents','complements','matieres_grasses','desserts','condiments','petit_dejeuner'];
+const CAT_PRI=['legumes','proteines','fromages','feculents','complements','matieres_grasses','desserts','boissons','condiments','petit_dejeuner'];
 
 function solveMeal(mealItems, budget, getFoodById, options={}) {
   const mode = options.mode || 'equilibre';
