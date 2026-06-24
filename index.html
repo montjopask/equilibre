@@ -396,6 +396,7 @@ const defaultFoods = [
   { id:'huile_olive', name:"Huile d'olive", category:'matieres_grasses', kcalPer100:884, protPer100:0, defaultPortion:10, minPortion:0, maxPortion:20, adjustable:true },
   { id:'huile_coco', name:'Huile de coco', category:'matieres_grasses', kcalPer100:862, protPer100:0, defaultPortion:10, minPortion:0, maxPortion:20, adjustable:true },
   { id:'huile_sesame', name:'Huile de sésame', category:'matieres_grasses', kcalPer100:884, protPer100:0, defaultPortion:5, minPortion:0, maxPortion:15, adjustable:true },
+  { id:'huile_arachide', name:'Huile d\'arachide', category:'matieres_grasses', kcalPer100:884, protPer100:0, defaultPortion:5, minPortion:0, maxPortion:20, adjustable:true },
   { id:'beurre', name:'Beurre', category:'matieres_grasses', kcalPer100:717, protPer100:0.9, defaultPortion:10, minPortion:0, maxPortion:20, adjustable:true },
   { id:'skyr', name:'Skyr (nature)', category:'complements', kcalPer100:60, protPer100:11, defaultPortion:150, minPortion:50, maxPortion:400, adjustable:true },
   { id:'hipro', name:'HiPRO boisson chocolat', category:'complements', kcalPer100:54, protPer100:7.6, defaultPortion:165, minPortion:165, maxPortion:330, unitWeight:165, packageSize:330, adjustable:false },
@@ -431,10 +432,10 @@ const presetMenus = [
     herbs:'Coriandre fraîche · ½ c.c. zaatar · Pincée de sumac (option) · Gomasio à la place du sel (option)',
     tip:'Ne pas resaler : le thon, le zaatar et le gomasio peuvent déjà être salés.'
   }]},
-  { id:'pois_chiches_crevettes', name:'Pois chiches, crevettes, cumin, coriandre & sésame', meals: [{
-    name:'Repas', items:[{foodId:'pois_chiches',quantity:165},{foodId:'crevettes',quantity:180},{foodId:'huile_olive',quantity:5},{foodId:'huile_sesame',quantity:2},{foodId:'citron',quantity:15}],
-    herbs:'Coriandre fraîche · ½ c.c. cumin grillé au mortier · ½ c.c. nuoc-mâm · 1 c.c. sésame doré ou gomasio · Pincée de sumac (option) · Pointe de curcuma (option)',
-    tip:'Cumin : 30 s à sec puis broyer au mortier. Huile de coco possible à la place de l\'olive. Huile de sésame après cuisson. Ne pas resaler avant d\'avoir goûté.'
+  { id:'pois_chiches_crevettes', name:'Pois chiches, crevettes, ail, cumin & sumac', meals: [{
+    name:'Repas', items:[{foodId:'pois_chiches',quantity:165},{foodId:'crevettes',quantity:180},{foodId:'huile_coco',quantity:5},{foodId:'huile_arachide',quantity:2},{foodId:'citron',quantity:15}],
+    herbs:'Coriandre fraîche · Ail en lamelles · ½ c.c. cumin grillé au mortier · 1 c.c. sumac · ½ c.c. nuoc-mâm · 1 c.c. rase de sucre (~5 g) · Sel · 1 c.c. sésame doré ou gomasio · Pointe de curcuma (option)',
+    tip:'Vinaigrette : huile de coco + huile d\'arachide en proportions normales. Citron vert plutôt que jaune. Cumin : 30 s à sec puis broyer au mortier. Une pointe de sucre équilibre l\'acidité du citron. Goûter avant de resaler.'
   }]},
   { id:'haricots_maquereau_zaatar', name:'Haricots blancs, maquereau, aneth, zaatar & sumac', meals: [{
     name:'Repas', items:[{foodId:'haricots_blancs',quantity:250},{foodId:'maquereau',quantity:79},{foodId:'huile_olive',quantity:5},{foodId:'citron',quantity:15},{foodId:'vinaigre',quantity:5}],
