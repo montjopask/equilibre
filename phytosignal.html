@@ -219,8 +219,8 @@
     <div class="row">
       <button class="play" id="playBtn">▶  Lancer la lecture</button>
       <button class="loopbtn" id="loopBtn" aria-pressed="true">Boucle ⟳</button>
-      <button class="loopbtn" id="gmBtn" aria-pressed="false"
-        title="Bascule le violoncelle (rose) et la contrebasse (jasmin) sur des voix General-MIDI, pour comparer">Sons : synthèse</button>
+      <button class="loopbtn" id="gmBtn" aria-pressed="true"
+        title="Bascule tous les instruments entre voix General-MIDI et synthèse maison, pour comparer">Sons : General-MIDI</button>
     </div>
     <div class="plants" id="plants"></div>
     <div class="sliders">
@@ -354,8 +354,15 @@
   const BASS_BARS = 4;                                     // basse rare et planante : ~toutes les 4 mesures
   const BASS_SLOT = STEPS_PER_BAR * BASS_BARS;             // 32 pas entre deux créneaux
   const BASS_HOLD = 14;                                    // tenue ~1,75 mesure, puis vrai silence
-  /* Intermédiaire General-MIDI (webaudio-tinysynth) — POC violoncelle + contrebasse */
-  const GM_MAP = { violoncelle:{ch:1,prog:42}, contrebasse:{ch:2,prog:43} }; // GM 42 Cello · 43 Contrabass
+  /* Voix General-MIDI (webaudio-tinysynth) — par défaut pour tous les instruments */
+  const GM_MAP = {
+    contrebasse:{ch:1,prog:32},  // jasmin — Acoustic Bass (pizz)
+    violoncelle:{ch:2,prog:42},  // rose — Cello
+    mandoline:  {ch:3,prog:25},  // lavande — Steel Guitar
+    theorbe:    {ch:4,prog:24},  // tubéreuse — Nylon Guitar
+    hautbois:   {ch:5,prog:68},  // néroli — Oboe
+  };
+  const GM_BASS = {ch:6,prog:33}; // ligne de basse — Electric Bass (finger)
 
   /* ==================================================================
      ÉTAT
@@ -368,7 +375,7 @@
   let seq="", atgStart=0;
   let readIndex=0, nextNoteTime=0, startCtxTime=0;
   let stepClock=0, nextBassStep=0, bassPitch=BASS_TONIC;  // horloge libre + prochain créneau de basse + hauteur
-  let gm=null, gmReady=false, gmEnabled=false;            // synthé General-MIDI (intermédiaire)
+  let gm=null, gmReady=false, gmEnabled=true;             // synthé General-MIDI (par défaut)
   let schedulerId=null;
   const queue=[];
   let display={i:0,freq:0,note:"—",codon:"———",gc:0.5};
@@ -426,6 +433,7 @@
       gm.setAudioContext(ctx, bus);
       gm.setMasterVol(1.0);
       for(const k in GM_MAP) gm.setProgram(GM_MAP[k].ch, GM_MAP[k].prog);
+      gm.setProgram(GM_BASS.ch, GM_BASS.prog);
       gmReady=true;
     }catch(e){ gmReady=false; }
   }
@@ -435,6 +443,17 @@
     const vel=Math.max(1,Math.min(127,Math.round(100*(gainMul||1))));
     gm.noteOn(cfg.ch,midi,vel,t);
     gm.noteOff(cfg.ch,midi,t+Math.max(0.06,dur));
+  }
+  /* ligne de basse : GM si actif (doublée d'une octave pour l'audibilité sur petit HP), sinon synthèse */
+  function playBass(midi,t,dur){
+    if(gmEnabled && gmReady){
+      gm.noteOn(GM_BASS.ch, midi, 120, t);
+      gm.noteOn(GM_BASS.ch, midi+12, 74, t);   // octave au-dessus, plus douce
+      gm.noteOff(GM_BASS.ch, midi, t+dur);
+      gm.noteOff(GM_BASS.ch, midi+12, t+dur);
+    } else {
+      playNote("basse", midiToFreq(midi), t, dur, {gainMul:0.75});
+    }
   }
   function makeImpulse(seconds,decay){
     const rate=ctx.sampleRate, len=Math.floor(rate*seconds), buf=ctx.createBuffer(2,len,rate);
@@ -569,7 +588,7 @@
     let bass=null;
     if(stepClock >= nextBassStep){
       if(gc>0.55) bassPitch=BASS_FIFTH; else if(gc<0.42) bassPitch=BASS_TONIC; // sinon on garde
-      playNote(BASS_INSTR, midiToFreq(bassPitch), t, stepDur()*BASS_HOLD, {gainMul:0.5});
+      playBass(bassPitch, t, stepDur()*BASS_HOLD);
       bass={active:true, kind:(bassPitch===BASS_FIFTH?"quinte":"tonique"), note:noteName(bassPitch)};
       const h=codeHash(seq,i);           // 0..63, tiré des 3 bases courantes
       const jitter=h%9;                   // décalage 0..8 pas → moins prévisible
