@@ -226,8 +226,8 @@
     <div class="sliders">
       <div class="field">
         <label for="bpm">Tempo</label>
-        <input type="range" id="bpm" min="48" max="132" value="80" step="1">
-        <output id="bpmOut">80 BPM</output>
+        <input type="range" id="bpm" min="48" max="132" value="96" step="1">
+        <output id="bpmOut">96 BPM</output>
       </div>
     </div>
   </div>
@@ -350,10 +350,10 @@
   const KEY_CODONS = new Set(["ATG","TAA","AAA","GGG"]); // → triolets
   const BASS_INSTR = "basse";                              // ligne de basse électrique (pincée)
   const BASS_TONIC = 44, BASS_FIFTH = 51;                  // La♭2 / Mi♭3 — toujours La bémol
-  const STEPS_PER_BAR = 8;                                 // 2 bases/temps × 4 temps = 1 mesure
+  const STEPS_PER_BAR = 4;                                 // 1 base/temps (noire) × 4 temps = 1 mesure
   const BASS_BARS = 4;                                     // basse rare et planante : ~toutes les 4 mesures
-  const BASS_SLOT = STEPS_PER_BAR * BASS_BARS;             // 32 pas entre deux créneaux
-  const BASS_HOLD = 30;                                    // tenue ~4 mesures avec dégradé graduel
+  const BASS_SLOT = STEPS_PER_BAR * BASS_BARS;             // 16 pas entre deux créneaux
+  const BASS_HOLD = 15;                                    // tenue ~4 mesures avec dégradé graduel
   /* Voix General-MIDI (webaudio-tinysynth) — par défaut pour tous les instruments */
   const GM_MAP = {
     contrebasse:{ch:1,prog:32},  // jasmin — Acoustic Bass (pizz)
@@ -370,7 +370,7 @@
   let ctx=null, master, comp, analyser, convolver, reverbReturn, reverbSend;
   let timeData, waveCache={};
   let playing=false, loop=true;
-  let bpm=80; const volume=0.85; // tempo lent (jam) · volume géré par l'appareil
+  let bpm=96; const volume=0.85; // tempo (noires) · volume géré par l'appareil
   let plant=PLANTS[0];
   let seq="", atgStart=0;
   let readIndex=0, nextNoteTime=0, startCtxTime=0;
@@ -564,7 +564,7 @@
      SÉQUENCEUR — planification anticipée
   ================================================================== */
   const LOOKAHEAD=25, AHEAD=0.12;
-  function stepDur(){ return (60/bpm)/2; } // deux bases par temps (croches)
+  function stepDur(){ return 60/bpm; } // une base par temps (noire)
 
   function scheduleStep(i,t){
     const base=seq[i];
@@ -578,20 +578,12 @@
     const h=codeHash(seq,i);                 // 0..63, tiré des 3 bases courantes
     const noteAt = k => plant.tonic + (plant.intervals[seq[(i+k)%seq.length]] ?? 0);
 
-    /* ---- mélodie : figure rythmique dictée par le code ----
-       croche par défaut ; doubles-croches ou triolet bien plus souvent, selon
-       les codons clés, les homopolymères et l'empreinte du triplet courant. */
-    let figure="croche";
-    if(cod && cod.boundary && KEY_CODONS.has(cod.text)) figure="triolet";
-    else if(base===seq[(i+1)%seq.length]) figure="doubles"; // homopolymère → doubles-croches
-    else if(h%5===0) figure="triolet";
-    else if(h%4===0) figure="doubles";
-
-    if(figure==="croche"){
+    /* ---- mélodie : notes simples (une par temps) et ~20% de triolets ----
+       Pas de doubles-croches. Les triolets, choisis par l'empreinte du triplet
+       courant, ornent harmonieusement une trame régulière de noires. */
+    let figure = (((i*3 + h) % 5) === 0) ? "triolet" : "note"; // ~20% de triolets, réparti régulièrement
+    if(figure==="note"){
       playNote(plant.instr, freq, t, dur);
-    } else if(figure==="doubles"){                          // deux doubles-croches
-      playNote(plant.instr, freq, t, dur*0.5);
-      playNote(plant.instr, midiToFreq(noteAt(1)), t+step*0.5, dur*0.5, {gainMul:0.9});
     } else {                                                // triolet (3 notes dans le temps)
       playNote(plant.instr, freq, t, step/3*0.9);
       playNote(plant.instr, midiToFreq(noteAt(1)), t+step/3,   step/3*0.9, {gainMul:0.92});
