@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0d0c">
+<title>Phytosignal — Le Parfum du La bémol</title>
+</head>
+<body>
+<style>
+  /* ============================================================
+     PHYTOSIGNAL — Le Parfum du La bémol
+     Sonification directe de séquences génétiques (Web Audio).
+     Synthèse additive par instrument (grain, corps, vibrato).
+     Écran d'instrument « phosphore » — mono-thème assumé.
+     ============================================================ */
+  :root{
+    --bg:#0a0d0c; --panel:#0f1412; --panel-2:#121a16; --well:#070a09;
+    --line:#1d2721; --line-2:#28352d;
+    --ink:#cfd9cf; --muted:#7c897e; --dim:#48524b;
+    --accent:#ece3cf; --accent-2:#b7ad93;           /* piloté par la plante */
+    --A:#5cc08c; --T:#e2685f; --G:#5ea0e6; --C:#e0b45a; /* nucléotides */
+    --mono: ui-monospace,"SF Mono","JetBrains Mono","Cascadia Code",Menlo,Consolas,monospace;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --sans:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%, #10171300, #05080700), var(--bg);
+    color:var(--ink); font-family:var(--sans);
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+  }
+  .instrument{max-width:1080px;margin:0 auto;padding:26px 20px 60px}
+
+  /* ---------- Masthead ---------- */
+  .masthead{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;
+    border-bottom:1px solid var(--line);padding-bottom:16px;flex-wrap:wrap}
+  .brand .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.34em;text-transform:uppercase;
+    color:var(--accent-2);margin-bottom:8px;transition:color .5s}
+  .brand h1{font-family:var(--serif);font-weight:600;font-size:clamp(30px,6vw,46px);
+    margin:0;letter-spacing:.01em;text-wrap:balance;color:var(--ink)}
+  .brand h1 .flat{color:var(--accent);transition:color .5s;font-style:italic}
+  .brand .sub{font-size:13px;color:var(--muted);margin-top:6px}
+  .status{display:flex;flex-direction:column;align-items:flex-end;gap:8px;font-family:var(--mono)}
+  .chip{display:inline-flex;align-items:center;gap:9px;font-size:12px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink);border:1px solid var(--line-2);border-radius:999px;
+    padding:6px 13px;background:var(--panel)}
+  .chip .led{width:8px;height:8px;border-radius:50%;background:var(--dim);
+    box-shadow:0 0 0 0 transparent;transition:background .3s,box-shadow .3s}
+  .chip.play .led{background:var(--accent);box-shadow:0 0 10px 1px var(--accent)}
+  .chip.pause .led{background:var(--C);box-shadow:0 0 8px 1px var(--C)}
+  .timer{font-size:20px;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:.06em}
+
+  .tagline{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15px;margin:14px 2px 22px}
+  .tagline em{color:var(--accent);font-style:italic;transition:color .5s}
+
+  /* ---------- Écran / oscilloscope ---------- */
+  .screen{position:relative;background:var(--well);border:1px solid var(--line-2);border-radius:14px;
+    overflow:hidden;box-shadow:inset 0 0 60px rgba(0,0,0,.65), 0 1px 0 rgba(255,255,255,.02)}
+  #scope{display:block;width:100%;height:210px}
+  .screen::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px),
+      radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(0,0,0,.5));
+    mix-blend-mode:multiply;opacity:.5}
+  .screen .overlay{position:absolute;top:12px;left:14px;font-family:var(--mono);font-size:11px;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--accent-2);transition:color .5s}
+  .screen .freqbig{position:absolute;bottom:10px;right:14px;font-family:var(--mono);font-size:13px;
+    color:var(--muted);font-variant-numeric:tabular-nums}
+
+  /* ---------- Ruban ADN ---------- */
+  .ribbon-wrap{margin-top:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:12px 6px 14px;position:relative;overflow:hidden}
+  .ribbon-wrap .strand{font-family:var(--mono);font-size:9px;letter-spacing:.32em;color:var(--dim);
+    text-align:center;text-transform:uppercase;margin:0 0 6px}
+  #ribbon{font-family:var(--mono);font-size:clamp(15px,3.4vw,20px);white-space:nowrap;text-align:center;
+    letter-spacing:.10em;line-height:1.9;
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 16%,#000 84%,transparent);
+            mask-image:linear-gradient(90deg,transparent,#000 16%,#000 84%,transparent)}
+  #ribbon .b-A{color:var(--A)} #ribbon .b-T{color:var(--T)}
+  #ribbon .b-G{color:var(--G)} #ribbon .b-C{color:var(--C)}
+  #ribbon .cur{position:relative;color:#05080a;border-radius:4px;padding:2px 3px;background:var(--accent);
+    box-shadow:0 0 14px 1px var(--accent);transition:background .5s}
+  #ribbon .dim{opacity:.34}
+
+  /* ---------- Cadrans ---------- */
+  .readouts{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;margin-top:14px;
+    background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .cell{background:var(--panel);padding:12px 13px;min-height:64px}
+  .cell .lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .cell .val{font-family:var(--mono);font-size:16px;margin-top:5px;color:var(--ink);
+    font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cell .val.accent{color:var(--accent);transition:color .5s}
+  .cell.wide{grid-column:span 2}
+  .gc-cell{grid-column:span 2}
+  .gc-bar{position:relative;height:9px;margin-top:9px;background:var(--well);border-radius:6px;
+    overflow:hidden;border:1px solid var(--line-2)}
+  .gc-fill{position:absolute;left:0;top:0;bottom:0;width:0%;
+    background:linear-gradient(90deg,var(--G),var(--C));transition:width .18s linear}
+  .gc-mark{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--dim)}
+  .gc-mark.lo{left:45%} .gc-mark.hi{left:52%}
+  .gc-drone{font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:6px;letter-spacing:.04em}
+
+  /* ---------- Transport ---------- */
+  .transport{margin-top:20px;display:flex;flex-direction:column;gap:16px}
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .play{font-family:var(--mono);font-size:14px;letter-spacing:.08em;background:var(--accent);color:#06090a;
+    border:none;border-radius:10px;padding:14px 22px;cursor:pointer;font-weight:600;min-width:200px;
+    transition:background .5s,transform .05s}
+  .play:active{transform:translateY(1px)}
+  .play.on{background:var(--panel-2);color:var(--ink);border:1px solid var(--line-2)}
+  .plants{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+  .plant{display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--line);
+    border-radius:10px;padding:9px 12px;cursor:pointer;color:var(--muted);font-family:var(--sans);
+    font-size:13px;text-align:left;transition:border-color .2s,color .2s,background .2s}
+  .plant .dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 0 3px rgba(0,0,0,.25) inset}
+  .plant .nm{font-weight:600;color:var(--ink)} .plant .sp{font-style:italic;font-size:11px;color:var(--muted);display:block}
+  .plant[aria-pressed="true"]{border-color:var(--pc);color:var(--ink);background:var(--panel-2)}
+  .plant[aria-pressed="true"] .nm{color:var(--pc)}
+  .sliders{display:flex;gap:22px;flex-wrap:wrap;align-items:center}
+  .field{display:flex;align-items:center;gap:10px}
+  .field label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .field output{font-family:var(--mono);font-size:12px;color:var(--ink);min-width:52px;font-variant-numeric:tabular-nums}
+  input[type=range]{-webkit-appearance:none;appearance:none;height:3px;width:130px;border-radius:3px;background:var(--line-2);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+    background:var(--accent);cursor:pointer;border:2px solid var(--well)}
+  input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--well)}
+  .loopbtn{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;padding:9px 12px;cursor:pointer}
+  .loopbtn[aria-pressed="true"]{color:var(--accent);border-color:var(--accent-2)}
+
+  /* ---------- Aide ---------- */
+  details.help{margin-top:26px;border-top:1px solid var(--line);padding-top:16px}
+  details.help summary{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);cursor:pointer;list-style:none}
+  details.help summary::-webkit-details-marker{display:none}
+  details.help summary::before{content:"› ";color:var(--accent-2)}
+  details.help[open] summary::before{content:"⌄ "}
+  .help-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:16px}
+  .help-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 15px}
+  .help-card h3{margin:0 0 6px;font-size:13px;color:var(--accent);font-family:var(--sans);transition:color .5s}
+  .help-card p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.6}
+  .help-card code{font-family:var(--mono);color:var(--ink);font-size:12px}
+  .help table{border-collapse:collapse;width:100%;margin-top:14px;font-family:var(--mono);font-size:11.5px}
+  .help table th,.help table td{border:1px solid var(--line);padding:6px 9px;text-align:center}
+  .help table th{color:var(--muted);font-weight:500;letter-spacing:.06em;background:var(--panel)}
+  .help table td:first-child{text-align:left;color:var(--ink)}
+  footer.legal{margin-top:34px;color:var(--dim);font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;line-height:1.7}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+  @media (max-width:760px){
+    .readouts{grid-template-columns:repeat(2,1fr)}
+    .cell.wide,.gc-cell{grid-column:span 2}
+    .play{width:100%}
+    .status{align-items:flex-start}
+    .masthead{align-items:flex-start}
+  }
+  @media (prefers-reduced-motion:reduce){
+    #ribbon .cur{box-shadow:none}
+    .chip.play .led{box-shadow:none}
+  }
+</style>
+
+<div class="instrument">
+
+  <header class="masthead">
+    <div class="brand">
+      <div class="kicker">Phytosignal · Sonification du vivant</div>
+      <h1>Le Parfum du <span class="flat">La&nbsp;bémol</span></h1>
+      <div class="sub">Séquences génétiques des plantes à parfum de Grasse — traduites en musique · tonique&nbsp;: La&nbsp;bémol</div>
+    </div>
+    <div class="status">
+      <span class="chip" id="chip"><span class="led"></span><span id="statusText">En attente</span></span>
+      <span class="timer" id="timer">00:00:00</span>
+    </div>
+  </header>
+
+  <p class="tagline">Chaque plante possède son timbre, son registre, son tempo. Le signal que vous entendez <em>est</em> l'ADN.</p>
+
+  <div class="screen">
+    <canvas id="scope" width="1040" height="210" aria-label="Oscilloscope du signal audio"></canvas>
+    <div class="overlay" id="scopeLabel">Initialisation des oscillateurs…</div>
+    <div class="freqbig" id="scopeFreq">—</div>
+  </div>
+
+  <div class="ribbon-wrap">
+    <div class="strand">5′ — brin sens — 3′</div>
+    <div id="ribbon" aria-hidden="true"></div>
+  </div>
+
+  <div class="readouts">
+    <div class="cell"><div class="lab">Espèce</div><div class="val accent" id="rSpecies">—</div></div>
+    <div class="cell wide"><div class="lab">Gène / enzyme</div><div class="val" id="rGene">—</div></div>
+    <div class="cell"><div class="lab">Fréquence</div><div class="val" id="rFreq">— Hz</div></div>
+    <div class="cell"><div class="lab">Note</div><div class="val" id="rNote">—</div></div>
+    <div class="cell"><div class="lab">Codon</div><div class="val accent" id="rCodon">———</div></div>
+
+    <div class="cell"><div class="lab">Position</div><div class="val" id="rPos">—/—</div></div>
+    <div class="cell"><div class="lab">Début (ATG)</div><div class="val" id="rAtg">pos. —</div></div>
+    <div class="cell"><div class="lab">Registre</div><div class="val" id="rOct">octave —</div></div>
+    <div class="cell"><div class="lab">Tempo</div><div class="val" id="rTempo">— ms</div></div>
+    <div class="cell"><div class="lab">Timbre</div><div class="val" id="rTimbre">—</div></div>
+    <div class="cell"><div class="lab">Synthèse</div><div class="val" id="rWave">—</div></div>
+
+    <div class="cell wide"><div class="lab">Note olfactive</div><div class="val" id="rOlf">—</div></div>
+    <div class="cell wide gc-cell">
+      <div class="lab">GC local — fenêtre glissante</div>
+      <div class="gc-bar"><div class="gc-fill" id="gcFill"></div>
+        <div class="gc-mark lo"></div><div class="gc-mark hi"></div></div>
+      <div class="gc-drone" id="gcDrone">Drone : —</div>
+    </div>
+    <div class="cell"><div class="lab">GC</div><div class="val accent" id="rGC">—%</div></div>
+  </div>
+
+  <div class="transport">
+    <div class="row">
+      <button class="play" id="playBtn">▶  Lancer la lecture</button>
+      <button class="loopbtn" id="loopBtn" aria-pressed="true">Boucle ⟳</button>
+    </div>
+    <div class="plants" id="plants"></div>
+    <div class="sliders">
+      <div class="field">
+        <label for="bpm">Tempo</label>
+        <input type="range" id="bpm" min="60" max="200" value="125" step="1">
+        <output id="bpmOut">125 BPM</output>
+      </div>
+      <div class="field">
+        <label for="vol">Volume</label>
+        <input type="range" id="vol" min="0" max="100" value="80" step="1">
+        <output id="volOut">80 %</output>
+      </div>
+    </div>
+  </div>
+
+  <details class="help">
+    <summary>Comment l'ADN devient musique</summary>
+    <div class="help-grid">
+      <div class="help-card"><h3>Mélodie — intervalles modaux</h3>
+        <p>Chaque nucléotide <code>A·T·G·C</code> est lu séquentiellement et transposé en intervalle, à partir de la tonique <strong>La bémol</strong>. Le mode dépend de la plante.</p></div>
+      <div class="help-card"><h3>Timbre & registre</h3>
+        <p>L'espèce fixe l'instrument, l'octave et le spectre harmonique (synthèse additive + grain d'attaque + corps résonant).</p></div>
+      <div class="help-card"><h3>Volatilité olfactive → durée</h3>
+        <p>Note de tête, de cœur ou de fond. <code>durée = tempo × (0.95 − volatilité × 0.55)</code> : le fond est legato, la tête staccato.</p></div>
+      <div class="help-card"><h3>Ratio G/C → drone d'archet</h3>
+        <p>Fenêtre glissante : <code>GC &lt; 45%</code> → tonique, <code>GC &gt; 52%</code> → quinte. Un violoncelle tenu porte les zones extrêmes.</p></div>
+      <div class="help-card"><h3>Codons → triolets</h3>
+        <p><code>ATG</code> (start), <code>TAA</code> (stop), <code>AAA</code> / <code>GGG</code> déclenchent un triolet accéléré — ponctuation biologique.</p></div>
+      <div class="help-card"><h3>Point de départ</h3>
+        <p>La lecture commence au premier <code>ATG</code> de la séquence, comme l'initiation de la traduction cellulaire.</p></div>
+    </div>
+    <table>
+      <thead><tr><th>Plante</th><th>Mode</th><th>A</th><th>T</th><th>G</th><th>C</th><th>Instrument</th><th>Oct.</th></tr></thead>
+      <tbody id="modeTable"></tbody>
+    </table>
+  </details>
+
+  <footer class="legal">
+    Le Parfum du La bémol — Grasse · Sonification du vivant : quand l'ADN devient partition.<br>
+    Reconstruit d'après la doc « Architecture du mapping ». Synthèse temps réel (Web Audio) — aucun échantillon externe.
+    Les séquences intégrées sont représentatives (illustratives) et remplaçables par les séquences réelles.
+  </footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ==================================================================
+     BANQUE D'INSTRUMENTS — synthèse additive
+     Chaque instrument = spectre harmonique (partiels) + corps résonant
+     (filtres) + grain (bruit d'attaque/souffle) + enveloppe + vibrato.
+     family "pluck" : attaque nette, décroissance exponentielle, pas de tenue.
+     family "bow"/"reed" : attaque douce, tenue + vibrato + souffle continu.
+  ================================================================== */
+  const INSTRUMENTS = {
+    contrebasse:{ label:"Contrebasse pizz.", character:"Corde pincée grave · 7 partiels", family:"pluck",
+      partials:[1,0.55,0.32,0.22,0.13,0.08,0.05], detune:[-4,4], sub:true,
+      bodies:[{type:"lowpass",f:1400,q:0.6},{type:"peaking",f:120,q:0.8,gain:5}],
+      click:{type:"lowpass",f:2500,amt:0.5,dur:0.02}, env:{a:0.004,decay:1.0,r:0.06}, gain:0.5 },
+    harpe:{ label:"Harpe", character:"Corde pincée claire · 11 partiels", family:"pluck",
+      partials:[1,0.5,0.65,0.3,0.4,0.22,0.28,0.16,0.12,0.09,0.07], detune:[-3,3],
+      bodies:[{type:"highpass",f:120,q:0.7},{type:"peaking",f:2000,q:1,gain:4}],
+      click:{type:"highpass",f:3000,amt:0.3,dur:0.012}, env:{a:0.002,decay:1.15,r:0.4}, gain:0.4 },
+    mandoline:{ label:"Mandoline", character:"Cordes doublées · trémolo", family:"pluck",
+      partials:[1,0.85,0.6,0.7,0.45,0.5,0.32,0.26,0.2,0.15], detune:[-9,9], tremolo:true,
+      bodies:[{type:"highpass",f:220,q:0.7},{type:"peaking",f:2500,q:1.2,gain:5}],
+      click:{type:"highpass",f:3500,amt:0.35,dur:0.01}, env:{a:0.002,decay:0.7,r:0.15}, gain:0.3 },
+    theorbe:{ label:"Théorbe", character:"Luth résonant · corps chaud", family:"pluck",
+      partials:[1,0.7,0.4,0.28,0.18,0.12,0.08,0.05], detune:[-5,5], sub:true,
+      bodies:[{type:"lowpass",f:1900,q:0.6},{type:"peaking",f:300,q:0.8,gain:4}],
+      click:{type:"lowpass",f:2200,amt:0.4,dur:0.02}, env:{a:0.004,decay:1.35,r:0.3}, gain:0.42 },
+    koto:{ label:"Koto", character:"Cithare métallique · pincé bendé", family:"pluck",
+      partials:[1,0.35,0.6,0.3,0.5,0.28,0.34,0.2,0.16,0.1], detune:[-4,4], bend:true,
+      bodies:[{type:"highpass",f:250,q:0.7},{type:"peaking",f:2800,q:1.1,gain:4}],
+      click:{type:"highpass",f:3000,amt:0.4,dur:0.012}, env:{a:0.002,decay:1.0,r:0.25}, gain:0.34 },
+    /* voix d'archet/anche — utilisées pour le drone, disponibles pour la mélodie */
+    violoncelle:{ label:"Violoncelle", character:"Archet · vibrato · souffle", family:"bow",
+      partials:[1,0.85,0.6,0.72,0.5,0.55,0.38,0.32,0.22,0.16,0.12,0.08], detune:[-5,5],
+      bodies:[{type:"peaking",f:250,q:0.9,gain:6},{type:"peaking",f:600,q:1,gain:3},{type:"lowpass",f:3600,q:0.5}],
+      vibrato:{rate:5,depth:0.004}, noise:{type:"bandpass",f:1600,q:1,amt:0.05},
+      env:{a:0.07,s:0.85,r:0.3}, gain:0.32 },
+    hautbois:{ label:"Hautbois", character:"Anche double · formant nasal", family:"reed",
+      partials:[0.45,1,0.95,0.8,0.55,0.42,0.3,0.22,0.15], detune:[0],
+      bodies:[{type:"highpass",f:300,q:0.7},{type:"peaking",f:1100,q:2,gain:8},{type:"lowpass",f:4500,q:0.5}],
+      vibrato:{rate:5.5,depth:0.005}, noise:{type:"bandpass",f:2100,q:1,amt:0.045},
+      env:{a:0.05,s:0.9,r:0.12}, gain:0.28 },
+  };
+  const DRONE_INSTR = "violoncelle";
+
+  /* ==================================================================
+     PLANTES — mapping ADN → musique (doc « Architecture du mapping »)
+     Tonique = La bémol (A♭). MIDI A♭ : oct2→44, oct3→56, oct4→68, oct5→80.
+     Séquences ADN illustratives (ATG + codons stop + GGG/AAA).
+  ================================================================== */
+  const PLANTS = [
+    { key:"jasmin", nm:"Jasmin", sp:"Jasminum grandiflorum", gene:"Linalool synthase — EC 4.2.3.25",
+      color:"#ece3cf", color2:"#b7ad93", mode:"Mineur 7", intervals:{A:0,T:3,G:7,C:10},
+      tonic:44, oct:2, instr:"contrebasse", volatility:0.50, olf:"cœur",
+      seq:"GCACTTATGGCAAGCTTGGAGCAAATGACCCGTAGGCTAGGGATCAAGACCTTGCAAGTGACATGGGCAAATTCCGTGACCTTGAATAAGCTCGCAGGTTCAGACATGCAACGTTGGCAAATCCTAGGCATTGACCAAGTCTGGGATTAAACCGTGACTTAGGCAA" },
+    { key:"rose", nm:"Rose", sp:"Rosa centifolia", gene:"Germacrène-D synthase",
+      color:"#e08aa0", color2:"#b06678", mode:"Majeur 7", intervals:{A:0,T:4,G:7,C:11},
+      tonic:56, oct:3, instr:"harpe", volatility:0.55, olf:"cœur",
+      seq:"CCGGAGCATGGCCGGCAAGCGGTCCAAGGGCCTCGACGCCATGCTGGGCCAGTCCGGCAAGCCCGAGGGCTTCCAGGCCGTGCGGGACCTGGGCAAGTGCCGGGAGCTGGCCGGGTAAGCCGGCATGGCCCAGGGCTCCAAGCGGTGACCAGGGCTAA" },
+    { key:"lavande", nm:"Lavande", sp:"Lavandula angustifolia", gene:"Linalool synthase (LIS)",
+      color:"#a99be0", color2:"#7d71ad", mode:"Suspendu", intervals:{A:0,T:2,G:7,C:9},
+      tonic:68, oct:4, instr:"mandoline", volatility:0.75, olf:"tête",
+      seq:"AATTCAAATGGCAAATTGAAAGCAAATAACCATTAGATTAGAATCAAAACATTAGCAAATAAATTGGGAATTAAATCCATTAAATTTGAATAATTAGCAATTTAAGACATTCAACATTAGCAAATCCTAATTATTAACCAATTTAGGGATTAAATTATGATTAA" },
+    { key:"tubereuse", nm:"Tubéreuse", sp:"Polianthes tuberosa", gene:"Méthylbenzoate synthase",
+      color:"#cbd6a4", color2:"#97a374", mode:"Phrygien", intervals:{A:0,T:1,G:5,C:8},
+      tonic:44, oct:2, instr:"theorbe", volatility:0.30, olf:"fond",
+      seq:"TCACATGCTAAGCTTAGATCAAATCACCATTAGGATAGGGATCAAAGACTTAGCAAGTAACATTGGCAAATTACGTAACCTTAGATAAGCTAGCATGTTCATACATACAACATTAGCAATTCCTAGACATTAACCAAGTAGGGATTAAATCATGAATAA" },
+    { key:"neroli", nm:"Néroli", sp:"Citrus aurantium", gene:"Nérolidol synthase",
+      color:"#e8a45c", color2:"#b57a3c", mode:"Lydien", intervals:{A:0,T:4,G:6,C:11},
+      tonic:80, oct:5, instr:"koto", volatility:0.80, olf:"tête",
+      seq:"GCTCAGCATGGCGAGCTTCGAGCAGATCACCGGTAGGCTCGGGATCAAGACCCTGGCGAGTGCCATGGGCGAGTTCCGGGACCTGGAGTAGGCTCGCAGGTCCAGACGTGCAGCGCTGGGCGAGTCCTAGGCGTTGACCGAGTCGGGATCAAGCCGTGACTAA" },
+  ];
+  // pour l'affichage : instrument lisible par plante
+  PLANTS.forEach(p=>{ p.instrument = INSTRUMENTS[p.instr].label; });
+  const KEY_CODONS = new Set(["ATG","TAA","AAA","GGG"]);
+
+  /* ==================================================================
+     ÉTAT
+  ================================================================== */
+  let ctx=null, master, comp, analyser, convolver, reverbReturn, reverbSend;
+  let drone=null; // {oscs, gain, vib}
+  let timeData, waveCache={};
+  let playing=false, loop=true;
+  let bpm=125, volume=0.80;
+  let plant=PLANTS[0];
+  let seq="", atgStart=0;
+  let readIndex=0, nextNoteTime=0, startCtxTime=0, lastDroneMidi=null;
+  let schedulerId=null;
+  const queue=[];
+  let display={i:0,freq:0,note:"—",codon:"———",gc:0.5};
+  const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+  const $ = id => document.getElementById(id);
+  const NAMES=["Do","Do♯","Ré","Mi♭","Mi","Fa","Fa♯","Sol","La♭","La","Si♭","Si"];
+  const midiToFreq = m => 440*Math.pow(2,(m-69)/12);
+  const noteName = m => NAMES[((m%12)+12)%12] + (Math.floor(m/12)-1);
+
+  /* ---------- séquence : premier ATG, fenêtre GC, cadre de lecture ---------- */
+  function firstATG(s){ const k=s.indexOf("ATG"); return k<0?0:k; }
+  function gcWindow(s,i,w=16){
+    const start=Math.max(0,i-w+1); let g=0,n=0;
+    for(let k=start;k<=i && k<s.length;k++){ const b=s[k]; if(b==="G"||b==="C")g++; n++; }
+    return n? g/n : 0.5;
+  }
+  function codonAt(s,i){
+    if(i<atgStart) return null;
+    const cs = atgStart + Math.floor((i-atgStart)/3)*3;
+    return { start:cs, boundary:(cs===i), text:s.substr(cs,3) };
+  }
+
+  /* ==================================================================
+     GRAPHE AUDIO
+  ================================================================== */
+  function buildGraph(){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    ctx = new AC();
+    master = ctx.createGain(); master.gain.value=volume;
+    comp = ctx.createDynamicsCompressor();
+    comp.threshold.value=-14; comp.knee.value=24; comp.ratio.value=6; comp.attack.value=0.003; comp.release.value=0.25;
+    analyser = ctx.createAnalyser(); analyser.fftSize=2048; timeData=new Uint8Array(analyser.fftSize);
+
+    convolver = ctx.createConvolver(); convolver.buffer=makeImpulse(1.9,2.6);
+    reverbSend = ctx.createGain(); reverbSend.gain.value=1;
+    reverbReturn = ctx.createGain(); reverbReturn.gain.value=0.34;
+    reverbSend.connect(convolver); convolver.connect(reverbReturn); reverbReturn.connect(master);
+
+    master.connect(analyser); analyser.connect(comp); comp.connect(ctx.destination);
+
+    waveCache={}; buildDrone();
+    lastDroneMidi=null;
+  }
+  function makeImpulse(seconds,decay){
+    const rate=ctx.sampleRate, len=Math.floor(rate*seconds), buf=ctx.createBuffer(2,len,rate);
+    for(let ch=0;ch<2;ch++){ const d=buf.getChannelData(ch);
+      for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay); }
+    return buf;
+  }
+  function getWave(instKey){
+    if(waveCache[instKey]) return waveCache[instKey];
+    const h=INSTRUMENTS[instKey].partials, n=h.length+1;
+    const real=new Float32Array(n), imag=new Float32Array(n);
+    for(let i=1;i<n;i++) imag[i]=h[i-1];
+    const w=ctx.createPeriodicWave(real,imag,{disableNormalization:false});
+    waveCache[instKey]=w; return w;
+  }
+
+  /* ---------- grain : bruit d'attaque (pince) ou souffle (archet/anche) ---------- */
+  function grain(cfg,t,dur,{sustain=false}={}){
+    const len = sustain? Math.max(dur,0.15)+0.1 : (cfg.dur||0.03)+0.02;
+    const n=Math.max(1,Math.floor(ctx.sampleRate*len)), buf=ctx.createBuffer(1,n,ctx.sampleRate);
+    const d=buf.getChannelData(0); for(let i=0;i<n;i++) d[i]=Math.random()*2-1;
+    const src=ctx.createBufferSource(); src.buffer=buf;
+    const flt=ctx.createBiquadFilter(); flt.type=cfg.type||"bandpass"; flt.frequency.value=cfg.f; flt.Q.value=cfg.q||1;
+    const g=ctx.createGain();
+    src.connect(flt); flt.connect(g); g.connect(master); g.connect(reverbSend);
+    if(sustain){
+      g.gain.setValueAtTime(0.0001,t);
+      g.gain.exponentialRampToValueAtTime(cfg.amt,t+0.03);
+      g.gain.setValueAtTime(cfg.amt,t+dur*0.55);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+dur+0.08);
+    } else {
+      g.gain.setValueAtTime(cfg.amt,t);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+(cfg.dur||0.02));
+    }
+    src.start(t); src.stop(t+len+0.05);
+  }
+
+  /* ---------- une note d'instrument ---------- */
+  function playNote(instKey,freq,t,dur,{gainMul=1}={}){
+    const inst=INSTRUMENTS[instKey], wave=getWave(instKey);
+    const vgain=ctx.createGain();
+    // chaîne de corps (résonances)
+    let chain=vgain;
+    (inst.bodies||[]).forEach(b=>{
+      const f=ctx.createBiquadFilter(); f.type=b.type; f.frequency.value=b.f;
+      if(b.q!=null)f.Q.value=b.q; if(b.gain!=null)f.gain.value=b.gain;
+      chain.connect(f); chain=f;
+    });
+    chain.connect(master); chain.connect(reverbSend);
+
+    // oscillateurs (cordes doublées désaccordées)
+    const oscs=(inst.detune||[0]).map(cents=>{
+      const o=ctx.createOscillator(); o.setPeriodicWave(wave);
+      if(inst.bend){ o.frequency.setValueAtTime(freq*0.97,t); o.frequency.linearRampToValueAtTime(freq,t+0.08); }
+      else o.frequency.setValueAtTime(freq,t);
+      o.detune.setValueAtTime(cents,t); o.connect(vgain); return o;
+    });
+    // vibrato (voix tenues)
+    let lfo=null;
+    if(inst.vibrato){
+      lfo=ctx.createOscillator(); lfo.frequency.value=inst.vibrato.rate;
+      const lg=ctx.createGain(); lg.gain.value=freq*inst.vibrato.depth;
+      lfo.connect(lg); oscs.forEach(o=>lg.connect(o.frequency)); lfo.start(t);
+    }
+    // enveloppe
+    const peak=inst.gain*gainMul, a=inst.env.a;
+    vgain.gain.setValueAtTime(0.0001,t);
+    vgain.gain.exponentialRampToValueAtTime(peak,t+a);
+    let end;
+    if(inst.family==="pluck"){
+      end=t+a+dur*(inst.env.decay||1);
+      vgain.gain.exponentialRampToValueAtTime(0.0001,end);
+    } else {
+      const s=Math.max(0.0002,peak*(inst.env.s??0.8)), holdEnd=t+Math.max(dur,a+0.12);
+      vgain.gain.exponentialRampToValueAtTime(s,t+a+0.1);
+      vgain.gain.setValueAtTime(s,holdEnd);
+      end=holdEnd+(inst.env.r||0.2);
+      vgain.gain.exponentialRampToValueAtTime(0.0001,end);
+    }
+    oscs.forEach(o=>{o.start(t); o.stop(end+0.06);});
+    if(lfo) lfo.stop(end+0.06);
+
+    // sous-octave (contrebasse / théorbe)
+    if(inst.sub){
+      const o2=ctx.createOscillator(); o2.type="sine"; o2.frequency.setValueAtTime(freq/2,t);
+      const g2=ctx.createGain(); o2.connect(g2); g2.connect(master);
+      g2.gain.setValueAtTime(0.0001,t);
+      g2.gain.exponentialRampToValueAtTime(peak*0.5,t+a);
+      g2.gain.exponentialRampToValueAtTime(0.0001,t+a+dur*(inst.env.decay||1));
+      o2.start(t); o2.stop(t+a+dur*(inst.env.decay||1)+0.06);
+    }
+    // grain
+    if(inst.click) grain(inst.click,t,dur,{sustain:false});
+    if(inst.noise) grain(inst.noise,t,dur,{sustain:true});
+  }
+
+  /* ---------- drone d'archet continu, piloté par G/C ---------- */
+  function buildDrone(){
+    const inst=INSTRUMENTS[DRONE_INSTR], wave=getWave(DRONE_INSTR);
+    const gain=ctx.createGain(); gain.gain.value=0;
+    const lp=ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=1200; lp.Q.value=0.6;
+    const peak=ctx.createBiquadFilter(); peak.type="peaking"; peak.frequency.value=250; peak.Q.value=0.9; peak.gain.value=5;
+    lp.connect(peak); peak.connect(gain); gain.connect(master); gain.connect(reverbSend);
+    const oscs=[-6,6].map(c=>{ const o=ctx.createOscillator(); o.setPeriodicWave(wave); o.detune.value=c; o.connect(lp); o.start(); return o; });
+    // vibrato lent
+    const lfo=ctx.createOscillator(); lfo.frequency.value=4.6;
+    const lg=ctx.createGain(); lfo.connect(lg); oscs.forEach(o=>lg.connect(o.frequency)); lfo.start();
+    drone={oscs,gain,lg};
+  }
+  function setDrone(midi,t,gc){
+    if(!drone) return;
+    const f=midiToFreq(midi);
+    drone.oscs.forEach(o=>o.frequency.setTargetAtTime(f,t,0.08));
+    drone.lg.gain.setTargetAtTime(f*0.004,t,0.1);
+    const extra=Math.max(0,Math.abs(gc-0.5)-0.02);
+    drone.gain.gain.setTargetAtTime(0.05+extra*0.6,t,0.12);
+  }
+
+  /* ==================================================================
+     SÉQUENCEUR — planification anticipée
+  ================================================================== */
+  const LOOKAHEAD=25, AHEAD=0.12;
+  function stepDur(){ return (60/bpm)/2; } // deux bases par temps (croches)
+
+  function scheduleStep(i,t){
+    const base=seq[i];
+    const iv=plant.intervals[base] ?? 0;
+    const midi=plant.tonic+iv, freq=midiToFreq(midi);
+    const gc=gcWindow(seq,i);
+    const dur=stepDur()*(0.95 - plant.volatility*0.55);
+
+    playNote(plant.instr,freq,t,dur);
+    if(INSTRUMENTS[plant.instr].tremolo){ // mandoline : re-pincé
+      playNote(plant.instr,freq,t+stepDur()*0.5,dur*0.55,{gainMul:0.8});
+    }
+
+    // drone piloté par G/C
+    let dMidi=lastDroneMidi==null? plant.tonic-12 : lastDroneMidi;
+    if(gc>0.52) dMidi=plant.tonic-12+7; else if(gc<0.45) dMidi=plant.tonic-12;
+    lastDroneMidi=dMidi; setDrone(dMidi,t,gc);
+
+    // codons clés → triolet une octave au-dessus
+    const cod=codonAt(seq,i);
+    if(cod && cod.boundary && KEY_CODONS.has(cod.text)){
+      const sd=stepDur();
+      for(let n=0;n<3;n++){
+        const b=cod.text[n], m=plant.tonic+(plant.intervals[b]??0)+12;
+        playNote(plant.instr,midiToFreq(m),t+n*sd/3,sd/3*0.9,{gainMul:0.7});
+      }
+    }
+    queue.push({t,i,freq,note:noteName(midi),codon:cod?cod.text:"———",gc});
+  }
+
+  function scheduler(){
+    if(!playing) return;
+    while(nextNoteTime < ctx.currentTime + AHEAD){
+      scheduleStep(readIndex,nextNoteTime);
+      nextNoteTime += stepDur(); readIndex++;
+      if(readIndex>=seq.length){
+        if(loop) readIndex=atgStart;
+        else { stopAtEnd(nextNoteTime); return; }
+      }
+    }
+    schedulerId=setTimeout(scheduler,LOOKAHEAD);
+  }
+  function stopAtEnd(t){
+    const remain=(t-ctx.currentTime)*1000;
+    setTimeout(()=>{ if(playing) togglePlay(); }, Math.max(0,remain)+120);
+  }
+
+  /* ==================================================================
+     TRANSPORT
+  ================================================================== */
+  async function togglePlay(){
+    if(!playing){
+      if(!ctx) buildGraph();
+      if(ctx.state==="suspended") await ctx.resume();
+      master.gain.setTargetAtTime(volume,ctx.currentTime,0.02);
+      playing=true; readIndex=atgStart; queue.length=0; lastDroneMidi=null;
+      startCtxTime=ctx.currentTime; nextNoteTime=ctx.currentTime+0.08;
+      setStatus("play"); scheduler();
+      $("scopeLabel").textContent="Lecture — "+plant.sp;
+    } else {
+      playing=false;
+      if(schedulerId) clearTimeout(schedulerId);
+      if(drone) drone.gain.gain.setTargetAtTime(0,ctx.currentTime,0.12);
+      setStatus("pause"); $("scopeLabel").textContent="Suspendu";
+    }
+    updatePlayBtn();
+  }
+  function updatePlayBtn(){
+    const b=$("playBtn");
+    b.textContent = playing ? "❚❚  Suspendre" : "▶  Lancer la lecture";
+    b.classList.toggle("on",playing);
+  }
+  function setStatus(state){
+    const chip=$("chip"); chip.classList.remove("play","pause");
+    if(state==="play"){ chip.classList.add("play"); $("statusText").textContent="Lecture"; }
+    else if(state==="pause"){ chip.classList.add("pause"); $("statusText").textContent="Suspendu"; }
+    else $("statusText").textContent="En attente";
+  }
+
+  /* ==================================================================
+     SÉLECTION DE PLANTE
+  ================================================================== */
+  function selectPlant(p){
+    plant=p; seq=p.seq; atgStart=firstATG(seq); lastDroneMidi=null;
+    document.documentElement.style.setProperty("--accent",p.color);
+    document.documentElement.style.setProperty("--accent-2",p.color2);
+    const inst=INSTRUMENTS[p.instr];
+    $("rSpecies").textContent=p.sp;
+    $("rGene").textContent=p.gene;
+    $("rOct").textContent="octave "+p.oct;
+    $("rTimbre").textContent=inst.label;
+    $("rWave").textContent=inst.character;
+    $("rOlf").textContent="note de "+p.olf+" · volatilité "+p.volatility.toFixed(2);
+    $("rAtg").textContent="pos. "+atgStart;
+    $("rTempo").textContent=Math.round(stepDur()*1000)+" ms";
+    document.querySelectorAll(".plant").forEach(b=>b.setAttribute("aria-pressed", b.dataset.key===p.key));
+    readIndex=atgStart; display.i=atgStart;
+    renderRibbon(atgStart); renderReadoutsIdle();
+    if(playing) nextNoteTime=ctx.currentTime+0.05;
+    $("scopeLabel").textContent = playing ? "Lecture — "+p.sp : p.sp;
+  }
+  function renderReadoutsIdle(){
+    $("rFreq").textContent="— Hz"; $("rNote").textContent="—";
+    $("rCodon").textContent="———"; $("rGC").textContent="—%";
+    $("rPos").textContent=atgStart+"/"+seq.length;
+    $("gcFill").style.width="0%"; $("gcDrone").textContent="Drone : —";
+  }
+
+  /* ==================================================================
+     AFFICHAGE
+  ================================================================== */
+  function renderRibbon(center){
+    const span=20, parts=[];
+    for(let k=center-span;k<=center+span;k++){
+      if(k<0||k>=seq.length){ parts.push('<span class="dim">·</span>'); continue; }
+      const b=seq[k], cls = k===center ? "cur" : ("b-"+b);
+      parts.push(`<span class="${cls}">${b}</span>`);
+    }
+    $("ribbon").innerHTML=parts.join("");
+  }
+  function fmtTime(sec){
+    const cs=Math.floor((sec*100)%100), s=Math.floor(sec)%60, m=Math.floor(sec/60);
+    const p=(n)=>String(n).padStart(2,"0");
+    return `${p(m)}:${p(s)}:${p(cs)}`;
+  }
+  function frame(){
+    requestAnimationFrame(frame);
+    drawScope();
+    if(!playing||!ctx) return;
+    $("timer").textContent=fmtTime(ctx.currentTime-startCtxTime);
+    let changed=false;
+    while(queue.length && queue[0].t <= ctx.currentTime){ display=queue.shift(); changed=true; }
+    if(changed) applyDisplay();
+  }
+  function applyDisplay(){
+    const d=display;
+    renderRibbon(d.i);
+    $("rFreq").textContent=d.freq.toFixed(1)+" Hz";
+    $("rNote").textContent=d.note;
+    $("rCodon").textContent=d.codon;
+    $("rPos").textContent=d.i+"/"+seq.length;
+    const pct=Math.round(d.gc*100);
+    $("rGC").textContent=pct+"%"; $("gcFill").style.width=pct+"%";
+    $("scopeFreq").textContent=d.freq.toFixed(1)+" Hz · "+d.note;
+    $("gcDrone").textContent="Drone : "+(d.gc>0.52?"quinte (GC élevé)":d.gc<0.45?"tonique (GC bas)":"maintenu");
+  }
+
+  const scope=$("scope"), sctx=scope.getContext("2d");
+  function drawScope(){
+    const w=scope.width,h=scope.height;
+    sctx.clearRect(0,0,w,h);
+    sctx.strokeStyle="rgba(120,137,126,.12)"; sctx.lineWidth=1;
+    for(let x=0;x<=w;x+=w/12){ sctx.beginPath();sctx.moveTo(x,0);sctx.lineTo(x,h);sctx.stroke(); }
+    for(let y=0;y<=h;y+=h/4){ sctx.beginPath();sctx.moveTo(0,y);sctx.lineTo(w,y);sctx.stroke(); }
+    const acc=getComputedStyle(document.documentElement).getPropertyValue("--accent").trim()||"#ece3cf";
+    if(playing && analyser){
+      analyser.getByteTimeDomainData(timeData);
+      sctx.lineWidth=2; sctx.strokeStyle=acc;
+      if(!reduce){ sctx.shadowBlur=12; sctx.shadowColor=acc; }
+      sctx.beginPath();
+      const slice=w/timeData.length;
+      for(let i=0;i<timeData.length;i++){
+        const v=timeData[i]/128-1, x=i*slice, y=h/2+v*h*0.42;
+        i===0?sctx.moveTo(x,y):sctx.lineTo(x,y);
+      }
+      sctx.stroke(); sctx.shadowBlur=0;
+    } else {
+      sctx.lineWidth=2; sctx.strokeStyle="rgba(120,137,126,.45)";
+      sctx.beginPath();
+      for(let x=0;x<=w;x+=4){
+        const y=h/2+(reduce?0:Math.sin(x*0.02+performance.now()*0.001)*2);
+        x===0?sctx.moveTo(x,y):sctx.lineTo(x,y);
+      }
+      sctx.stroke();
+    }
+  }
+
+  /* ==================================================================
+     CÂBLAGE UI
+  ================================================================== */
+  function buildPlantButtons(){
+    const wrap=$("plants");
+    PLANTS.forEach(p=>{
+      const b=document.createElement("button");
+      b.className="plant"; b.dataset.key=p.key; b.setAttribute("aria-pressed","false");
+      b.style.setProperty("--pc",p.color);
+      b.innerHTML=`<span class="dot" style="background:${p.color}"></span>
+        <span><span class="nm">${p.nm}</span><span class="sp">${p.sp}</span></span>`;
+      b.addEventListener("click",()=>selectPlant(p));
+      wrap.appendChild(b);
+    });
+  }
+  function buildModeTable(){
+    const tb=$("modeTable");
+    PLANTS.forEach(p=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${p.nm}</td><td>${p.mode}</td><td>${p.intervals.A}</td><td>${p.intervals.T}</td>
+        <td>${p.intervals.G}</td><td>${p.intervals.C}</td><td>${p.instrument}</td><td>${p.oct}</td>`;
+      tb.appendChild(tr);
+    });
+  }
+
+  $("playBtn").addEventListener("click",togglePlay);
+  $("loopBtn").addEventListener("click",e=>{ loop=!loop; e.currentTarget.setAttribute("aria-pressed",loop); });
+  $("bpm").addEventListener("input",e=>{ bpm=+e.target.value; $("bpmOut").textContent=bpm+" BPM";
+    $("rTempo").textContent=Math.round(stepDur()*1000)+" ms"; });
+  $("vol").addEventListener("input",e=>{ volume=+e.target.value/100; $("volOut").textContent=e.target.value+" %";
+    if(master) master.gain.setTargetAtTime(volume,ctx.currentTime,0.02); });
+  document.addEventListener("keydown",e=>{
+    if(e.code==="Space" && e.target.tagName!=="INPUT"){ e.preventDefault(); togglePlay(); }
+  });
+
+  /* ---------- init ---------- */
+  buildPlantButtons(); buildModeTable(); selectPlant(PLANTS[0]);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
