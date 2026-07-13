@@ -200,14 +200,14 @@
     <div class="cell"><div class="lab">Registre</div><div class="val" id="rOct">octave —</div></div>
     <div class="cell"><div class="lab">Tempo</div><div class="val" id="rTempo">— ms</div></div>
     <div class="cell"><div class="lab">Timbre</div><div class="val" id="rTimbre">—</div></div>
-    <div class="cell"><div class="lab">Synthèse</div><div class="val" id="rWave">—</div></div>
+    <div class="cell"><div class="lab">Jeu · morphologie</div><div class="val" id="rWave">—</div></div>
 
     <div class="cell wide"><div class="lab">Note olfactive</div><div class="val" id="rOlf">—</div></div>
     <div class="cell wide gc-cell">
       <div class="lab">GC local — fenêtre glissante</div>
       <div class="gc-bar"><div class="gc-fill" id="gcFill"></div>
         <div class="gc-mark lo"></div><div class="gc-mark hi"></div></div>
-      <div class="gc-drone" id="gcDrone">Drone : —</div>
+      <div class="gc-drone" id="gcDrone">Basse : —</div>
     </div>
     <div class="cell"><div class="lab">GC</div><div class="val accent" id="rGC">—%</div></div>
   </div>
@@ -237,12 +237,14 @@
     <div class="help-grid">
       <div class="help-card"><h3>Mélodie — intervalles modaux</h3>
         <p>Chaque nucléotide <code>A·T·G·C</code> est lu séquentiellement et transposé en intervalle, à partir de la tonique <strong>La bémol</strong>. Le mode dépend de la plante.</p></div>
+      <div class="help-card"><h3>Morphologie → mode de jeu</h3>
+        <p>La forme de la plante fixe le geste : feuille effilée ou fleur pointue → <strong>cordes pincées</strong> ; forme ronde (fleur, fruit) → <strong>archet ou vent tenu</strong>. Jasmin, lavande, tubéreuse pincés ; rose au violoncelle, néroli au hautbois.</p></div>
       <div class="help-card"><h3>Timbre & registre</h3>
-        <p>L'espèce fixe l'instrument, l'octave et le spectre harmonique (synthèse additive + grain d'attaque + corps résonant).</p></div>
+        <p>L'espèce fixe l'octave et le spectre harmonique : synthèse additive + grain d'attaque + corps résonant, sans échantillon.</p></div>
       <div class="help-card"><h3>Volatilité olfactive → durée</h3>
         <p>Note de tête, de cœur ou de fond. <code>durée = tempo × (0.95 − volatilité × 0.55)</code> : le fond est legato, la tête staccato.</p></div>
-      <div class="help-card"><h3>Ratio G/C → drone d'archet</h3>
-        <p>Fenêtre glissante : <code>GC &lt; 45%</code> → tonique, <code>GC &gt; 52%</code> → quinte. Un violoncelle tenu porte les zones extrêmes.</p></div>
+      <div class="help-card"><h3>Cadre de lecture → ligne de basse</h3>
+        <p>La basse (violoncelle) est <strong>ré-articulée à chaque codon</strong> et se tait hors des cadres de lecture — d'un <code>ATG</code> jusqu'au prochain STOP. Sa hauteur suit le G/C : tonique si bas, quinte si élevé.</p></div>
       <div class="help-card"><h3>Codons → triolets</h3>
         <p><code>ATG</code> (start), <code>TAA</code> (stop), <code>AAA</code> / <code>GGG</code> déclenchent un triolet accéléré — ponctuation biologique.</p></div>
       <div class="help-card"><h3>Point de départ</h3>
@@ -293,7 +295,7 @@
       partials:[1,0.35,0.6,0.3,0.5,0.28,0.34,0.2,0.16,0.1], detune:[-4,4], bend:true,
       bodies:[{type:"highpass",f:250,q:0.7},{type:"peaking",f:2800,q:1.1,gain:4}],
       click:{type:"highpass",f:3000,amt:0.4,dur:0.012}, env:{a:0.002,decay:1.0,r:0.25}, gain:0.34 },
-    /* voix d'archet/anche — utilisées pour le drone, disponibles pour la mélodie */
+    /* voix d'archet / anche — ligne de basse (violoncelle) et mélodie des plantes rondes */
     violoncelle:{ label:"Violoncelle", character:"Archet · vibrato · souffle", family:"bow",
       partials:[1,0.85,0.6,0.72,0.5,0.55,0.38,0.32,0.22,0.16,0.12,0.08], detune:[-5,5],
       bodies:[{type:"peaking",f:250,q:0.9,gain:6},{type:"peaking",f:600,q:1,gain:3},{type:"lowpass",f:3600,q:0.5}],
@@ -305,7 +307,6 @@
       vibrato:{rate:5.5,depth:0.005}, noise:{type:"bandpass",f:2100,q:1,amt:0.045},
       env:{a:0.05,s:0.9,r:0.12}, gain:0.28 },
   };
-  const DRONE_INSTR = "violoncelle";
 
   /* ==================================================================
      PLANTES — mapping ADN → musique (doc « Architecture du mapping »)
@@ -315,40 +316,48 @@
   const PLANTS = [
     { key:"jasmin", nm:"Jasmin", sp:"Jasminum grandiflorum", gene:"Linalool synthase — EC 4.2.3.25",
       color:"#ece3cf", color2:"#b7ad93", mode:"Mineur 7", intervals:{A:0,T:3,G:7,C:10},
-      tonic:44, oct:2, instr:"contrebasse", volatility:0.50, olf:"cœur",
+      tonic:44, oct:2, instr:"contrebasse", play:"Pincé", morph:"feuille effilée · fleur étoilée",
+      volatility:0.50, olf:"cœur",
       seq:"GCACTTATGGCAAGCTTGGAGCAAATGACCCGTAGGCTAGGGATCAAGACCTTGCAAGTGACATGGGCAAATTCCGTGACCTTGAATAAGCTCGCAGGTTCAGACATGCAACGTTGGCAAATCCTAGGCATTGACCAAGTCTGGGATTAAACCGTGACTTAGGCAA" },
     { key:"rose", nm:"Rose", sp:"Rosa centifolia", gene:"Germacrène-D synthase",
       color:"#e08aa0", color2:"#b06678", mode:"Majeur 7", intervals:{A:0,T:4,G:7,C:11},
-      tonic:56, oct:3, instr:"harpe", volatility:0.55, olf:"cœur",
+      tonic:56, oct:3, instr:"violoncelle", play:"Archet", morph:"fleur globuleuse (rose à cent-feuilles)",
+      volatility:0.55, olf:"cœur",
       seq:"CCGGAGCATGGCCGGCAAGCGGTCCAAGGGCCTCGACGCCATGCTGGGCCAGTCCGGCAAGCCCGAGGGCTTCCAGGCCGTGCGGGACCTGGGCAAGTGCCGGGAGCTGGCCGGGTAAGCCGGCATGGCCCAGGGCTCCAAGCGGTGACCAGGGCTAA" },
     { key:"lavande", nm:"Lavande", sp:"Lavandula angustifolia", gene:"Linalool synthase (LIS)",
       color:"#a99be0", color2:"#7d71ad", mode:"Suspendu", intervals:{A:0,T:2,G:7,C:9},
-      tonic:68, oct:4, instr:"mandoline", volatility:0.75, olf:"tête",
+      tonic:68, oct:4, instr:"mandoline", play:"Pincé", morph:"feuille étroite (angustifolia)",
+      volatility:0.75, olf:"tête",
       seq:"AATTCAAATGGCAAATTGAAAGCAAATAACCATTAGATTAGAATCAAAACATTAGCAAATAAATTGGGAATTAAATCCATTAAATTTGAATAATTAGCAATTTAAGACATTCAACATTAGCAAATCCTAATTATTAACCAATTTAGGGATTAAATTATGATTAA" },
     { key:"tubereuse", nm:"Tubéreuse", sp:"Polianthes tuberosa", gene:"Méthylbenzoate synthase",
       color:"#cbd6a4", color2:"#97a374", mode:"Phrygien", intervals:{A:0,T:1,G:5,C:8},
-      tonic:44, oct:2, instr:"theorbe", volatility:0.30, olf:"fond",
+      tonic:44, oct:2, instr:"theorbe", play:"Pincé", morph:"feuille linéaire pointue",
+      volatility:0.30, olf:"fond",
       seq:"TCACATGCTAAGCTTAGATCAAATCACCATTAGGATAGGGATCAAAGACTTAGCAAGTAACATTGGCAAATTACGTAACCTTAGATAAGCTAGCATGTTCATACATACAACATTAGCAATTCCTAGACATTAACCAAGTAGGGATTAAATCATGAATAA" },
     { key:"neroli", nm:"Néroli", sp:"Citrus aurantium", gene:"Nérolidol synthase",
       color:"#e8a45c", color2:"#b57a3c", mode:"Lydien", intervals:{A:0,T:4,G:6,C:11},
-      tonic:80, oct:5, instr:"koto", volatility:0.80, olf:"tête",
+      tonic:80, oct:5, instr:"hautbois", play:"Vent", morph:"feuille ovale · fruit rond",
+      volatility:0.80, olf:"tête",
       seq:"GCTCAGCATGGCGAGCTTCGAGCAGATCACCGGTAGGCTCGGGATCAAGACCCTGGCGAGTGCCATGGGCGAGTTCCGGGACCTGGAGTAGGCTCGCAGGTCCAGACGTGCAGCGCTGGGCGAGTCCTAGGCGTTGACCGAGTCGGGATCAAGCCGTGACTAA" },
   ];
   // pour l'affichage : instrument lisible par plante
   PLANTS.forEach(p=>{ p.instrument = INSTRUMENTS[p.instr].label; });
-  const KEY_CODONS = new Set(["ATG","TAA","AAA","GGG"]);
+  const KEY_CODONS = new Set(["ATG","TAA","AAA","GGG"]); // → triolets
+  const STOP_CODONS = new Set(["TAA","TAG","TGA"]);       // fin de cadre de lecture
+  const BASS_INSTR = "violoncelle";                        // ligne de basse (archet, grave)
+  const BASS_TONIC = 44, BASS_FIFTH = 51;                  // La♭2 / Mi♭3 — toujours La bémol
 
   /* ==================================================================
      ÉTAT
   ================================================================== */
   let ctx=null, master, comp, analyser, convolver, reverbReturn, reverbSend;
-  let drone=null; // {oscs, gain, vib}
   let timeData, waveCache={};
   let playing=false, loop=true;
   let bpm=125, volume=0.80;
   let plant=PLANTS[0];
   let seq="", atgStart=0;
-  let readIndex=0, nextNoteTime=0, startCtxTime=0, lastDroneMidi=null;
+  let readIndex=0, nextNoteTime=0, startCtxTime=0;
+  let orfActive=true, bassLast=BASS_TONIC; // cadre de lecture ouvert ? + dernière hauteur de basse
   let schedulerId=null;
   const queue=[];
   let display={i:0,freq:0,note:"—",codon:"———",gc:0.5};
@@ -389,9 +398,7 @@
     reverbSend.connect(convolver); convolver.connect(reverbReturn); reverbReturn.connect(master);
 
     master.connect(analyser); analyser.connect(comp); comp.connect(ctx.destination);
-
-    waveCache={}; buildDrone();
-    lastDroneMidi=null;
+    waveCache={};
   }
   function makeImpulse(seconds,decay){
     const rate=ctx.sampleRate, len=Math.floor(rate*seconds), buf=ctx.createBuffer(2,len,rate);
@@ -488,28 +495,6 @@
     if(inst.noise) grain(inst.noise,t,dur,{sustain:true});
   }
 
-  /* ---------- drone d'archet continu, piloté par G/C ---------- */
-  function buildDrone(){
-    const inst=INSTRUMENTS[DRONE_INSTR], wave=getWave(DRONE_INSTR);
-    const gain=ctx.createGain(); gain.gain.value=0;
-    const lp=ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=1200; lp.Q.value=0.6;
-    const peak=ctx.createBiquadFilter(); peak.type="peaking"; peak.frequency.value=250; peak.Q.value=0.9; peak.gain.value=5;
-    lp.connect(peak); peak.connect(gain); gain.connect(master); gain.connect(reverbSend);
-    const oscs=[-6,6].map(c=>{ const o=ctx.createOscillator(); o.setPeriodicWave(wave); o.detune.value=c; o.connect(lp); o.start(); return o; });
-    // vibrato lent
-    const lfo=ctx.createOscillator(); lfo.frequency.value=4.6;
-    const lg=ctx.createGain(); lfo.connect(lg); oscs.forEach(o=>lg.connect(o.frequency)); lfo.start();
-    drone={oscs,gain,lg};
-  }
-  function setDrone(midi,t,gc){
-    if(!drone) return;
-    const f=midiToFreq(midi);
-    drone.oscs.forEach(o=>o.frequency.setTargetAtTime(f,t,0.08));
-    drone.lg.gain.setTargetAtTime(f*0.004,t,0.1);
-    const extra=Math.max(0,Math.abs(gc-0.5)-0.02);
-    drone.gain.gain.setTargetAtTime(0.05+extra*0.6,t,0.12);
-  }
-
   /* ==================================================================
      SÉQUENCEUR — planification anticipée
   ================================================================== */
@@ -528,13 +513,27 @@
       playNote(plant.instr,freq,t+stepDur()*0.5,dur*0.55,{gainMul:0.8});
     }
 
-    // drone piloté par G/C
-    let dMidi=lastDroneMidi==null? plant.tonic-12 : lastDroneMidi;
-    if(gc>0.52) dMidi=plant.tonic-12+7; else if(gc<0.45) dMidi=plant.tonic-12;
-    lastDroneMidi=dMidi; setDrone(dMidi,t,gc);
-
-    // codons clés → triolet une octave au-dessus
     const cod=codonAt(seq,i);
+
+    /* ---- ligne de basse : ré-articulée à chaque codon, MUETTE hors ORF ----
+       Elle sonne d'un ATG (start) jusqu'au prochain STOP (TAA/TAG/TGA),
+       puis se tait jusqu'au prochain ATG. Hauteur (tonique/quinte) = G/C. */
+    let bass=null;
+    if(cod && cod.boundary){
+      if(cod.text==="ATG") orfActive=true;
+      if(orfActive){
+        if(gc>0.52) bassLast=BASS_FIFTH; else if(gc<0.45) bassLast=BASS_TONIC;
+        const codonDur=stepDur()*3;
+        const extra=Math.max(0,Math.abs(gc-0.5)-0.02);
+        playNote(BASS_INSTR, midiToFreq(bassLast), t, codonDur*0.88, {gainMul:0.75+extra*1.1});
+        bass={active:true, kind:(bassLast===BASS_FIFTH?"quinte":"tonique")};
+      } else {
+        bass={active:false, kind:"silence"};
+      }
+      if(STOP_CODONS.has(cod.text)) orfActive=false; // le STOP referme le cadre
+    }
+
+    // codons clés → triolet une octave au-dessus (ponctuation)
     if(cod && cod.boundary && KEY_CODONS.has(cod.text)){
       const sd=stepDur();
       for(let n=0;n<3;n++){
@@ -542,7 +541,7 @@
         playNote(plant.instr,midiToFreq(m),t+n*sd/3,sd/3*0.9,{gainMul:0.7});
       }
     }
-    queue.push({t,i,freq,note:noteName(midi),codon:cod?cod.text:"———",gc});
+    queue.push({t,i,freq,note:noteName(midi),codon:cod?cod.text:"———",gc,bass});
   }
 
   function scheduler(){
@@ -551,7 +550,7 @@
       scheduleStep(readIndex,nextNoteTime);
       nextNoteTime += stepDur(); readIndex++;
       if(readIndex>=seq.length){
-        if(loop) readIndex=atgStart;
+        if(loop){ readIndex=atgStart; orfActive=true; bassLast=BASS_TONIC; } // relance : nouveau cadre
         else { stopAtEnd(nextNoteTime); return; }
       }
     }
@@ -570,14 +569,13 @@
       if(!ctx) buildGraph();
       if(ctx.state==="suspended") await ctx.resume();
       master.gain.setTargetAtTime(volume,ctx.currentTime,0.02);
-      playing=true; readIndex=atgStart; queue.length=0; lastDroneMidi=null;
+      playing=true; readIndex=atgStart; queue.length=0; orfActive=true; bassLast=BASS_TONIC;
       startCtxTime=ctx.currentTime; nextNoteTime=ctx.currentTime+0.08;
       setStatus("play"); scheduler();
       $("scopeLabel").textContent="Lecture — "+plant.sp;
     } else {
       playing=false;
       if(schedulerId) clearTimeout(schedulerId);
-      if(drone) drone.gain.gain.setTargetAtTime(0,ctx.currentTime,0.12);
       setStatus("pause"); $("scopeLabel").textContent="Suspendu";
     }
     updatePlayBtn();
@@ -598,7 +596,7 @@
      SÉLECTION DE PLANTE
   ================================================================== */
   function selectPlant(p){
-    plant=p; seq=p.seq; atgStart=firstATG(seq); lastDroneMidi=null;
+    plant=p; seq=p.seq; atgStart=firstATG(seq); orfActive=true; bassLast=BASS_TONIC;
     document.documentElement.style.setProperty("--accent",p.color);
     document.documentElement.style.setProperty("--accent-2",p.color2);
     const inst=INSTRUMENTS[p.instr];
@@ -606,7 +604,7 @@
     $("rGene").textContent=p.gene;
     $("rOct").textContent="octave "+p.oct;
     $("rTimbre").textContent=inst.label;
-    $("rWave").textContent=inst.character;
+    $("rWave").textContent=p.play+" — "+p.morph;
     $("rOlf").textContent="note de "+p.olf+" · volatilité "+p.volatility.toFixed(2);
     $("rAtg").textContent="pos. "+atgStart;
     $("rTempo").textContent=Math.round(stepDur()*1000)+" ms";
@@ -620,7 +618,7 @@
     $("rFreq").textContent="— Hz"; $("rNote").textContent="—";
     $("rCodon").textContent="———"; $("rGC").textContent="—%";
     $("rPos").textContent=atgStart+"/"+seq.length;
-    $("gcFill").style.width="0%"; $("gcDrone").textContent="Drone : —";
+    $("gcFill").style.width="0%"; $("gcDrone").textContent="Basse : —";
   }
 
   /* ==================================================================
@@ -659,7 +657,11 @@
     const pct=Math.round(d.gc*100);
     $("rGC").textContent=pct+"%"; $("gcFill").style.width=pct+"%";
     $("scopeFreq").textContent=d.freq.toFixed(1)+" Hz · "+d.note;
-    $("gcDrone").textContent="Drone : "+(d.gc>0.52?"quinte (GC élevé)":d.gc<0.45?"tonique (GC bas)":"maintenu");
+    if(d.bass){ // ne change qu'aux frontières de codon
+      $("gcDrone").textContent = d.bass.active
+        ? "Basse : "+d.bass.kind+" · codon "+d.codon
+        : "Basse : silence (hors cadre de lecture)";
+    }
   }
 
   const scope=$("scope"), sctx=scope.getContext("2d");
