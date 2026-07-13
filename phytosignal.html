@@ -244,7 +244,7 @@
       <div class="help-card"><h3>Volatilité olfactive → durée</h3>
         <p>Note de tête, de cœur ou de fond. <code>durée = tempo × (0.95 − volatilité × 0.55)</code> : le fond est legato, la tête staccato.</p></div>
       <div class="help-card"><h3>Cadre de lecture → ligne de basse</h3>
-        <p>La basse (violoncelle) est <strong>ré-articulée à chaque codon</strong> et se tait hors des cadres de lecture — d'un <code>ATG</code> jusqu'au prochain STOP. Sa hauteur suit le G/C : tonique si bas, quinte si élevé.</p></div>
+        <p>Une <strong>basse électrique</strong> pincée, espacée (une note tenue tous les deux codons), muette hors des cadres de lecture — d'un <code>ATG</code> jusqu'au prochain STOP. Sa tonalité (tonique/quinte, selon le G/C) ne change que rarement.</p></div>
       <div class="help-card"><h3>Codons → triolets</h3>
         <p><code>ATG</code> (start), <code>TAA</code> (stop), <code>AAA</code> / <code>GGG</code> déclenchent un triolet accéléré — ponctuation biologique.</p></div>
       <div class="help-card"><h3>Point de départ</h3>
@@ -295,7 +295,12 @@
       partials:[1,0.35,0.6,0.3,0.5,0.28,0.34,0.2,0.16,0.1], detune:[-4,4], bend:true,
       bodies:[{type:"highpass",f:250,q:0.7},{type:"peaking",f:2800,q:1.1,gain:4}],
       click:{type:"highpass",f:3000,amt:0.4,dur:0.012}, env:{a:0.002,decay:1.0,r:0.25}, gain:0.34 },
-    /* voix d'archet / anche — ligne de basse (violoncelle) et mélodie des plantes rondes */
+    /* basse électrique — ligne de basse pincée, façon groupe (grave, léger grain) */
+    basse:{ label:"Basse électrique", character:"Pincé grave · grain", family:"pluck",
+      partials:[1,0.5,0.33,0.18,0.1,0.06], detune:[-2,2], drive:2.4,
+      bodies:[{type:"peaking",f:80,q:0.7,gain:6},{type:"peaking",f:700,q:1.2,gain:3},{type:"lowpass",f:1000,q:0.9}],
+      click:{type:"lowpass",f:1800,amt:0.3,dur:0.018}, env:{a:0.006,decay:1.0,r:0.25}, gain:0.24 },
+    /* voix d'archet / anche — mélodie des plantes rondes (rose, néroli) */
     violoncelle:{ label:"Violoncelle", character:"Archet · vibrato · souffle", family:"bow",
       partials:[1,0.85,0.6,0.72,0.5,0.55,0.38,0.32,0.22,0.16,0.12,0.08], detune:[-5,5],
       bodies:[{type:"peaking",f:250,q:0.9,gain:6},{type:"peaking",f:600,q:1,gain:3},{type:"lowpass",f:3600,q:0.5}],
@@ -344,8 +349,9 @@
   PLANTS.forEach(p=>{ p.instrument = INSTRUMENTS[p.instr].label; });
   const KEY_CODONS = new Set(["ATG","TAA","AAA","GGG"]); // → triolets
   const STOP_CODONS = new Set(["TAA","TAG","TGA"]);       // fin de cadre de lecture
-  const BASS_INSTR = "violoncelle";                        // ligne de basse (archet, grave)
+  const BASS_INSTR = "basse";                              // ligne de basse électrique (pincée)
   const BASS_TONIC = 44, BASS_FIFTH = 51;                  // La♭2 / Mi♭3 — toujours La bémol
+  const BASS_PERIOD = 2;                                   // attaque tous les 2 codons (moins régulier)
 
   /* ==================================================================
      ÉTAT
@@ -357,7 +363,7 @@
   let plant=PLANTS[0];
   let seq="", atgStart=0;
   let readIndex=0, nextNoteTime=0, startCtxTime=0;
-  let orfActive=true, bassLast=BASS_TONIC; // cadre de lecture ouvert ? + dernière hauteur de basse
+  let orfActive=true, bassPitch=BASS_TONIC, bassCounter=0; // ORF ouvert ? + hauteur + compteur de codons
   let schedulerId=null;
   const queue=[];
   let display={i:0,freq:0,note:"—",codon:"———",gc:0.5};
@@ -414,6 +420,13 @@
     const w=ctx.createPeriodicWave(real,imag,{disableNormalization:false});
     waveCache[instKey]=w; return w;
   }
+  const driveCache={};
+  function getDrive(k){ // courbe de saturation douce (tanh) pour le grain « rock »
+    if(driveCache[k]) return driveCache[k];
+    const n=1024, c=new Float32Array(n), th=Math.tanh(k);
+    for(let i=0;i<n;i++){ const x=i/(n-1)*2-1; c[i]=Math.tanh(k*x)/th; }
+    driveCache[k]=c; return c;
+  }
 
   /* ---------- grain : bruit d'attaque (pince) ou souffle (archet/anche) ---------- */
   function grain(cfg,t,dur,{sustain=false}={}){
@@ -440,6 +453,9 @@
   function playNote(instKey,freq,t,dur,{gainMul=1}={}){
     const inst=INSTRUMENTS[instKey], wave=getWave(instKey);
     const vgain=ctx.createGain();
+    // entrée des oscillateurs : saturation douce optionnelle (grain « rock »)
+    let inNode=vgain;
+    if(inst.drive){ const ws=ctx.createWaveShaper(); ws.curve=getDrive(inst.drive); ws.oversample="2x"; ws.connect(vgain); inNode=ws; }
     // chaîne de corps (résonances)
     let chain=vgain;
     (inst.bodies||[]).forEach(b=>{
@@ -454,7 +470,7 @@
       const o=ctx.createOscillator(); o.setPeriodicWave(wave);
       if(inst.bend){ o.frequency.setValueAtTime(freq*0.97,t); o.frequency.linearRampToValueAtTime(freq,t+0.08); }
       else o.frequency.setValueAtTime(freq,t);
-      o.detune.setValueAtTime(cents,t); o.connect(vgain); return o;
+      o.detune.setValueAtTime(cents,t); o.connect(inNode); return o;
     });
     // vibrato (voix tenues)
     let lfo=null;
@@ -515,22 +531,25 @@
 
     const cod=codonAt(seq,i);
 
-    /* ---- ligne de basse : ré-articulée à chaque codon, MUETTE hors ORF ----
-       Elle sonne d'un ATG (start) jusqu'au prochain STOP (TAA/TAG/TGA),
-       puis se tait jusqu'au prochain ATG. Hauteur (tonique/quinte) = G/C. */
+    /* ---- ligne de basse électrique : pincée, espacée, MUETTE hors ORF ----
+       Une note tenue (qui retombe) tous les BASS_PERIOD codons, d'un ATG
+       jusqu'au prochain STOP. Tonalité (tonique/quinte) à hystérésis large :
+       elle change rarement. Bien plus douce que la mélodie. */
     let bass=null;
     if(cod && cod.boundary){
-      if(cod.text==="ATG") orfActive=true;
+      if(cod.text==="ATG" && !orfActive){ orfActive=true; bassCounter=0; } // entrée dans un cadre → attaque
       if(orfActive){
-        if(gc>0.52) bassLast=BASS_FIFTH; else if(gc<0.45) bassLast=BASS_TONIC;
-        const codonDur=stepDur()*3;
-        const extra=Math.max(0,Math.abs(gc-0.5)-0.02);
-        playNote(BASS_INSTR, midiToFreq(bassLast), t, codonDur*0.88, {gainMul:0.75+extra*1.1});
-        bass={active:true, kind:(bassLast===BASS_FIFTH?"quinte":"tonique")};
+        if(bassCounter===0){
+          if(gc>0.55) bassPitch=BASS_FIFTH; else if(gc<0.42) bassPitch=BASS_TONIC; // sinon on garde
+          const holdDur=stepDur()*3*BASS_PERIOD;
+          playNote(BASS_INSTR, midiToFreq(bassPitch), t, holdDur*0.8, {gainMul:0.6});
+          bass={active:true, kind:(bassPitch===BASS_FIFTH?"quinte":"tonique")};
+        }
+        bassCounter=(bassCounter+1)%BASS_PERIOD;
       } else {
-        bass={active:false, kind:"silence"};
+        bass={active:false, kind:"silence"}; bassCounter=0;
       }
-      if(STOP_CODONS.has(cod.text)) orfActive=false; // le STOP referme le cadre
+      if(STOP_CODONS.has(cod.text)){ orfActive=false; bassCounter=0; } // le STOP referme le cadre
     }
 
     // codons clés → triolet une octave au-dessus (ponctuation)
@@ -550,7 +569,7 @@
       scheduleStep(readIndex,nextNoteTime);
       nextNoteTime += stepDur(); readIndex++;
       if(readIndex>=seq.length){
-        if(loop){ readIndex=atgStart; orfActive=true; bassLast=BASS_TONIC; } // relance : nouveau cadre
+        if(loop){ readIndex=atgStart; orfActive=true; bassPitch=BASS_TONIC; bassCounter=0; } // relance
         else { stopAtEnd(nextNoteTime); return; }
       }
     }
@@ -569,7 +588,7 @@
       if(!ctx) buildGraph();
       if(ctx.state==="suspended") await ctx.resume();
       master.gain.setTargetAtTime(volume,ctx.currentTime,0.02);
-      playing=true; readIndex=atgStart; queue.length=0; orfActive=true; bassLast=BASS_TONIC;
+      playing=true; readIndex=atgStart; queue.length=0; orfActive=true; bassPitch=BASS_TONIC; bassCounter=0;
       startCtxTime=ctx.currentTime; nextNoteTime=ctx.currentTime+0.08;
       setStatus("play"); scheduler();
       $("scopeLabel").textContent="Lecture — "+plant.sp;
@@ -596,7 +615,7 @@
      SÉLECTION DE PLANTE
   ================================================================== */
   function selectPlant(p){
-    plant=p; seq=p.seq; atgStart=firstATG(seq); orfActive=true; bassLast=BASS_TONIC;
+    plant=p; seq=p.seq; atgStart=firstATG(seq); orfActive=true; bassPitch=BASS_TONIC; bassCounter=0;
     document.documentElement.style.setProperty("--accent",p.color);
     document.documentElement.style.setProperty("--accent-2",p.color2);
     const inst=INSTRUMENTS[p.instr];
