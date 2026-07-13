@@ -221,13 +221,8 @@
     <div class="sliders">
       <div class="field">
         <label for="bpm">Tempo</label>
-        <input type="range" id="bpm" min="60" max="200" value="125" step="1">
-        <output id="bpmOut">125 BPM</output>
-      </div>
-      <div class="field">
-        <label for="vol">Volume</label>
-        <input type="range" id="vol" min="0" max="100" value="80" step="1">
-        <output id="volOut">80 %</output>
+        <input type="range" id="bpm" min="48" max="132" value="80" step="1">
+        <output id="bpmOut">80 BPM</output>
       </div>
     </div>
   </div>
@@ -244,7 +239,7 @@
       <div class="help-card"><h3>Volatilité olfactive → durée</h3>
         <p>Note de tête, de cœur ou de fond. <code>durée = tempo × (0.95 − volatilité × 0.55)</code> : le fond est legato, la tête staccato.</p></div>
       <div class="help-card"><h3>Cadre de lecture → ligne de basse</h3>
-        <p>Une <strong>basse électrique</strong> pincée, espacée (une note tenue tous les deux codons), muette hors des cadres de lecture — d'un <code>ATG</code> jusqu'au prochain STOP. Sa tonalité (tonique/quinte, selon le G/C) ne change que rarement.</p></div>
+        <p>Une <strong>basse électrique</strong> pose une note grave qui <strong>tient ~2 mesures puis s'estompe</strong>, relancée à l'ouverture de chaque gène (<code>ATG</code>) et muette entre eux. Sa tonalité (tonique/quinte, selon le G/C) ne bouge que rarement : une fondation pour improviser par-dessus.</p></div>
       <div class="help-card"><h3>Codons → triolets</h3>
         <p><code>ATG</code> (start), <code>TAA</code> (stop), <code>AAA</code> / <code>GGG</code> déclenchent un triolet accéléré — ponctuation biologique.</p></div>
       <div class="help-card"><h3>Point de départ</h3>
@@ -351,7 +346,9 @@
   const STOP_CODONS = new Set(["TAA","TAG","TGA"]);       // fin de cadre de lecture
   const BASS_INSTR = "basse";                              // ligne de basse électrique (pincée)
   const BASS_TONIC = 44, BASS_FIFTH = 51;                  // La♭2 / Mi♭3 — toujours La bémol
-  const BASS_PERIOD = 2;                                   // attaque tous les 2 codons (moins régulier)
+  const STEPS_PER_BAR = 8;                                 // 2 bases/temps × 4 temps = 1 mesure
+  const BASS_BARS = 2;                                     // la basse tient ~2 mesures avant de se relancer
+  const BASS_STEPS = STEPS_PER_BAR * BASS_BARS;            // intervalle d'attaque de la basse
 
   /* ==================================================================
      ÉTAT
@@ -359,11 +356,11 @@
   let ctx=null, master, comp, analyser, convolver, reverbReturn, reverbSend;
   let timeData, waveCache={};
   let playing=false, loop=true;
-  let bpm=125, volume=0.80;
+  let bpm=80; const volume=0.85; // tempo lent (jam) · volume géré par l'appareil
   let plant=PLANTS[0];
   let seq="", atgStart=0;
   let readIndex=0, nextNoteTime=0, startCtxTime=0;
-  let orfActive=true, bassPitch=BASS_TONIC, bassCounter=0; // ORF ouvert ? + hauteur + compteur de codons
+  let orfActive=false, bassPitch=BASS_TONIC, barCounter=0; // ORF ouvert ? + hauteur + horloge de mesures
   let schedulerId=null;
   const queue=[];
   let display={i:0,freq:0,note:"—",codon:"———",gc:0.5};
@@ -531,26 +528,25 @@
 
     const cod=codonAt(seq,i);
 
-    /* ---- ligne de basse électrique : pincée, espacée, MUETTE hors ORF ----
-       Une note tenue (qui retombe) tous les BASS_PERIOD codons, d'un ATG
-       jusqu'au prochain STOP. Tonalité (tonique/quinte) à hystérésis large :
-       elle change rarement. Bien plus douce que la mélodie. */
-    let bass=null;
+    /* ---- état du cadre de lecture (au niveau codon) ---- */
     if(cod && cod.boundary){
-      if(cod.text==="ATG" && !orfActive){ orfActive=true; bassCounter=0; } // entrée dans un cadre → attaque
-      if(orfActive){
-        if(bassCounter===0){
-          if(gc>0.55) bassPitch=BASS_FIFTH; else if(gc<0.42) bassPitch=BASS_TONIC; // sinon on garde
-          const holdDur=stepDur()*3*BASS_PERIOD;
-          playNote(BASS_INSTR, midiToFreq(bassPitch), t, holdDur*0.8, {gainMul:0.6});
-          bass={active:true, kind:(bassPitch===BASS_FIFTH?"quinte":"tonique")};
-        }
-        bassCounter=(bassCounter+1)%BASS_PERIOD;
-      } else {
-        bass={active:false, kind:"silence"}; bassCounter=0;
-      }
-      if(STOP_CODONS.has(cod.text)){ orfActive=false; bassCounter=0; } // le STOP referme le cadre
+      if(cod.text==="ATG" && !orfActive){ orfActive=true; barCounter=0; } // un gène s'ouvre
+      else if(STOP_CODONS.has(cod.text)) orfActive=false;                 // on cesse d'attaquer, la note meurt
     }
+
+    /* ---- ligne de basse : UNE note longue toutes les ~BASS_BARS mesures,
+       alignée sur l'ouverture du gène, qui tient puis s'estompe. Elle se tait
+       entre les gènes (on laisse la dernière note mourir seule) et sa tonalité
+       (tonique/quinte, hystérésis large) ne change que rarement. Discrète :
+       elle laisse s'exprimer les rythmes et les notes de la mélodie. */
+    let bass=null;
+    if(orfActive && barCounter % BASS_STEPS === 0){
+      if(gc>0.55) bassPitch=BASS_FIFTH; else if(gc<0.42) bassPitch=BASS_TONIC; // sinon on garde
+      const holdDur=stepDur()*BASS_STEPS;
+      playNote(BASS_INSTR, midiToFreq(bassPitch), t, holdDur*0.98, {gainMul:0.5});
+      bass={active:true, kind:(bassPitch===BASS_FIFTH?"quinte":"tonique")};
+    }
+    barCounter = orfActive ? barCounter+1 : 0;
 
     // codons clés → triolet une octave au-dessus (ponctuation)
     if(cod && cod.boundary && KEY_CODONS.has(cod.text)){
@@ -569,7 +565,7 @@
       scheduleStep(readIndex,nextNoteTime);
       nextNoteTime += stepDur(); readIndex++;
       if(readIndex>=seq.length){
-        if(loop){ readIndex=atgStart; orfActive=true; bassPitch=BASS_TONIC; bassCounter=0; } // relance
+        if(loop){ readIndex=atgStart; orfActive=false; bassPitch=BASS_TONIC; barCounter=0; } // relance
         else { stopAtEnd(nextNoteTime); return; }
       }
     }
@@ -588,7 +584,7 @@
       if(!ctx) buildGraph();
       if(ctx.state==="suspended") await ctx.resume();
       master.gain.setTargetAtTime(volume,ctx.currentTime,0.02);
-      playing=true; readIndex=atgStart; queue.length=0; orfActive=true; bassPitch=BASS_TONIC; bassCounter=0;
+      playing=true; readIndex=atgStart; queue.length=0; orfActive=false; bassPitch=BASS_TONIC; barCounter=0;
       startCtxTime=ctx.currentTime; nextNoteTime=ctx.currentTime+0.08;
       setStatus("play"); scheduler();
       $("scopeLabel").textContent="Lecture — "+plant.sp;
@@ -615,7 +611,7 @@
      SÉLECTION DE PLANTE
   ================================================================== */
   function selectPlant(p){
-    plant=p; seq=p.seq; atgStart=firstATG(seq); orfActive=true; bassPitch=BASS_TONIC; bassCounter=0;
+    plant=p; seq=p.seq; atgStart=firstATG(seq); orfActive=false; bassPitch=BASS_TONIC; barCounter=0;
     document.documentElement.style.setProperty("--accent",p.color);
     document.documentElement.style.setProperty("--accent-2",p.color2);
     const inst=INSTRUMENTS[p.instr];
@@ -742,8 +738,6 @@
   $("loopBtn").addEventListener("click",e=>{ loop=!loop; e.currentTarget.setAttribute("aria-pressed",loop); });
   $("bpm").addEventListener("input",e=>{ bpm=+e.target.value; $("bpmOut").textContent=bpm+" BPM";
     $("rTempo").textContent=Math.round(stepDur()*1000)+" ms"; });
-  $("vol").addEventListener("input",e=>{ volume=+e.target.value/100; $("volOut").textContent=e.target.value+" %";
-    if(master) master.gain.setTargetAtTime(volume,ctx.currentTime,0.02); });
   document.addEventListener("keydown",e=>{
     if(e.code==="Space" && e.target.tagName!=="INPUT"){ e.preventDefault(); togglePlay(); }
   });
