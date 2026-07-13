@@ -296,10 +296,10 @@
       bodies:[{type:"highpass",f:250,q:0.7},{type:"peaking",f:2800,q:1.1,gain:4}],
       click:{type:"highpass",f:3000,amt:0.4,dur:0.012}, env:{a:0.002,decay:1.0,r:0.25}, gain:0.34 },
     /* basse électrique — ligne de basse pincée, façon groupe (grave, léger grain) */
-    basse:{ label:"Basse électrique", character:"Pincé grave · grain", family:"pluck",
-      partials:[1,0.5,0.33,0.18,0.1,0.06], detune:[-2,2], drive:2.4,
-      bodies:[{type:"peaking",f:80,q:0.7,gain:6},{type:"peaking",f:700,q:1.2,gain:3},{type:"lowpass",f:1000,q:0.9}],
-      click:{type:"lowpass",f:1800,amt:0.3,dur:0.018}, env:{a:0.006,decay:1.0,r:0.25}, gain:0.24 },
+    basse:{ label:"Basse (tenue)", character:"Grave tenu · dégradé", family:"pluck", longfade:true,
+      partials:[0.85,1,0.7,0.5,0.35,0.22,0.14,0.09], detune:[-2,2], drive:1.8,
+      bodies:[{type:"peaking",f:200,q:0.8,gain:4},{type:"peaking",f:520,q:1,gain:3},{type:"lowpass",f:2600,q:0.7}],
+      click:{type:"lowpass",f:2200,amt:0.20,dur:0.014}, env:{a:0.008}, gain:0.28 },
     /* voix d'archet / anche — mélodie des plantes rondes (rose, néroli) */
     violoncelle:{ label:"Violoncelle", character:"Archet · vibrato · souffle", family:"bow",
       partials:[1,0.85,0.6,0.72,0.5,0.55,0.38,0.32,0.22,0.16,0.12,0.08], detune:[-5,5],
@@ -353,7 +353,7 @@
   const STEPS_PER_BAR = 8;                                 // 2 bases/temps × 4 temps = 1 mesure
   const BASS_BARS = 4;                                     // basse rare et planante : ~toutes les 4 mesures
   const BASS_SLOT = STEPS_PER_BAR * BASS_BARS;             // 32 pas entre deux créneaux
-  const BASS_HOLD = 14;                                    // tenue ~1,75 mesure, puis vrai silence
+  const BASS_HOLD = 30;                                    // tenue ~4 mesures avec dégradé graduel
   /* Voix General-MIDI (webaudio-tinysynth) — par défaut pour tous les instruments */
   const GM_MAP = {
     contrebasse:{ch:1,prog:32},  // jasmin — Acoustic Bass (pizz)
@@ -362,7 +362,7 @@
     theorbe:    {ch:4,prog:24},  // tubéreuse — Nylon Guitar
     hautbois:   {ch:5,prog:68},  // néroli — Oboe
   };
-  const GM_BASS = {ch:6,prog:33}; // ligne de basse — Electric Bass (finger)
+  // la ligne de basse reste en synthèse (contrôle du dégradé), même en mode GM
 
   /* ==================================================================
      ÉTAT
@@ -433,7 +433,6 @@
       gm.setAudioContext(ctx, bus);
       gm.setMasterVol(1.0);
       for(const k in GM_MAP) gm.setProgram(GM_MAP[k].ch, GM_MAP[k].prog);
-      gm.setProgram(GM_BASS.ch, GM_BASS.prog);
       gmReady=true;
     }catch(e){ gmReady=false; }
   }
@@ -444,16 +443,10 @@
     gm.noteOn(cfg.ch,midi,vel,t);
     gm.noteOff(cfg.ch,midi,t+Math.max(0.06,dur));
   }
-  /* ligne de basse : GM si actif (doublée d'une octave pour l'audibilité sur petit HP), sinon synthèse */
+  /* ligne de basse : toujours en synthèse (dégradé maîtrisé), doublée d'une octave pour l'audibilité */
   function playBass(midi,t,dur){
-    if(gmEnabled && gmReady){
-      gm.noteOn(GM_BASS.ch, midi, 120, t);
-      gm.noteOn(GM_BASS.ch, midi+12, 74, t);   // octave au-dessus, plus douce
-      gm.noteOff(GM_BASS.ch, midi, t+dur);
-      gm.noteOff(GM_BASS.ch, midi+12, t+dur);
-    } else {
-      playNote("basse", midiToFreq(midi), t, dur, {gainMul:0.75});
-    }
+    playNote("basse", midiToFreq(midi),    t, dur, {gainMul:0.95});
+    playNote("basse", midiToFreq(midi+12), t, dur, {gainMul:0.5});
   }
   function makeImpulse(seconds,decay){
     const rate=ctx.sampleRate, len=Math.floor(rate*seconds), buf=ctx.createBuffer(2,len,rate);
@@ -535,8 +528,14 @@
     vgain.gain.exponentialRampToValueAtTime(peak,t+a);
     let end;
     if(inst.family==="pluck"){
-      end=t+a+dur*(inst.env.decay||1);
-      vgain.gain.exponentialRampToValueAtTime(0.0001,end);
+      if(inst.longfade){                       // attaque, court plateau, puis long dégradé
+        vgain.gain.setValueAtTime(peak, t+a+dur*0.22);
+        end=t+a+dur;
+        vgain.gain.exponentialRampToValueAtTime(0.0001,end);
+      } else {
+        end=t+a+dur*(inst.env.decay||1);
+        vgain.gain.exponentialRampToValueAtTime(0.0001,end);
+      }
     } else {
       const s=Math.max(0.0002,peak*(inst.env.s??0.8)), holdEnd=t+Math.max(dur,a+0.12);
       vgain.gain.exponentialRampToValueAtTime(s,t+a+0.1);
@@ -574,38 +573,45 @@
     const gc=gcWindow(seq,i);
     const dur=stepDur()*(0.95 - plant.volatility*0.55);
 
-    playNote(plant.instr,freq,t,dur);
-    if(INSTRUMENTS[plant.instr].tremolo){ // mandoline : re-pincé
-      playNote(plant.instr,freq,t+stepDur()*0.5,dur*0.55,{gainMul:0.8});
+    const step=stepDur();
+    const cod=codonAt(seq,i);
+    const h=codeHash(seq,i);                 // 0..63, tiré des 3 bases courantes
+    const noteAt = k => plant.tonic + (plant.intervals[seq[(i+k)%seq.length]] ?? 0);
+
+    /* ---- mélodie : figure rythmique dictée par le code ----
+       croche par défaut ; doubles-croches ou triolet bien plus souvent, selon
+       les codons clés, les homopolymères et l'empreinte du triplet courant. */
+    let figure="croche";
+    if(cod && cod.boundary && KEY_CODONS.has(cod.text)) figure="triolet";
+    else if(base===seq[(i+1)%seq.length]) figure="doubles"; // homopolymère → doubles-croches
+    else if(h%5===0) figure="triolet";
+    else if(h%4===0) figure="doubles";
+
+    if(figure==="croche"){
+      playNote(plant.instr, freq, t, dur);
+    } else if(figure==="doubles"){                          // deux doubles-croches
+      playNote(plant.instr, freq, t, dur*0.5);
+      playNote(plant.instr, midiToFreq(noteAt(1)), t+step*0.5, dur*0.5, {gainMul:0.9});
+    } else {                                                // triolet (3 notes dans le temps)
+      playNote(plant.instr, freq, t, step/3*0.9);
+      playNote(plant.instr, midiToFreq(noteAt(1)), t+step/3,   step/3*0.9, {gainMul:0.92});
+      playNote(plant.instr, midiToFreq(noteAt(2)), t+2*step/3, step/3*0.9, {gainMul:0.85});
     }
 
-    const cod=codonAt(seq,i);
-
-    /* ---- ligne de basse : note rare (~4 mesures), tenue ~1,75 mesure puis
-       vrai silence. Placement et sauts dictés par le code lu à cet instant :
-       objectif mais imprévisible. Tonalité (tonique/quinte, hystérésis large)
-       changeant rarement. Discrète : elle laisse respirer la mélodie. */
+    /* ---- ligne de basse : note rare (~4 mesures) qui dure et se dégrade ;
+       placement et silences dictés par le code (imprévisible). ---- */
     let bass=null;
     if(stepClock >= nextBassStep){
       if(gc>0.55) bassPitch=BASS_FIFTH; else if(gc<0.42) bassPitch=BASS_TONIC; // sinon on garde
-      playBass(bassPitch, t, stepDur()*BASS_HOLD);
+      playBass(bassPitch, t, step*BASS_HOLD);
       bass={active:true, kind:(bassPitch===BASS_FIFTH?"quinte":"tonique"), note:noteName(bassPitch)};
-      const h=codeHash(seq,i);           // 0..63, tiré des 3 bases courantes
       const jitter=h%9;                   // décalage 0..8 pas → moins prévisible
       const extra=(h%5===0)?BASS_SLOT:0;  // ~1 fois sur 5 : créneau sauté → grand silence
       nextBassStep = stepClock + BASS_SLOT + jitter + extra;
     }
     stepClock++;
 
-    // codons clés → triolet une octave au-dessus (ponctuation)
-    if(cod && cod.boundary && KEY_CODONS.has(cod.text)){
-      const sd=stepDur();
-      for(let n=0;n<3;n++){
-        const b=cod.text[n], m=plant.tonic+(plant.intervals[b]??0)+12;
-        playNote(plant.instr,midiToFreq(m),t+n*sd/3,sd/3*0.9,{gainMul:0.7});
-      }
-    }
-    queue.push({t,i,freq,note:noteName(midi),codon:cod?cod.text:"———",gc,bass});
+    queue.push({t,i,freq,note:noteName(midi),codon:cod?cod.text:"———",gc,bass,figure});
   }
 
   function scheduler(){
