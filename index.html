@@ -513,7 +513,7 @@ const defaultFoods = [
   { id:'creme_fraiche', name:'Crème fraîche légère', category:'matieres_grasses', kcalPer100:170, protPer100:2.5, defaultPortion:15, minPortion:5, maxPortion:50, adjustable:false },
   { id:'chocolat_lindt_85', name:'Chocolat Lindt 85 %', category:'desserts', kcalPer100:603, fibPer100:12.0, protPer100:9, defaultPortion:10, minPortion:10, maxPortion:50, unitWeight:10, adjustable:false },
   { id:'pate_cacahuetes', name:'Pâte de cacahuètes', category:'matieres_grasses', kcalPer100:588, fibPer100:8.0, protPer100:25, defaultPortion:15, minPortion:5, maxPortion:30, adjustable:false },
-  { id:'puree_fruits', name:'Purée de fruits (sans sucres aj.)', category:'desserts', kcalPer100:58, fibPer100:1.5, protPer100:0, defaultPortion:90, minPortion:90, maxPortion:270, unitWeight:90, adjustable:false },
+  { id:'puree_fruits', name:'Purée de fruits (sans sucres aj.)', category:'desserts', kcalPer100:58, fibPer100:1.3, protPer100:0, defaultPortion:90, minPortion:90, maxPortion:270, unitWeight:90, adjustable:false },
   { id:'thon_huile_olive', name:'Thon blanc à l\'huile d\'olive', category:'proteines', kcalPer100:186, protPer100:25, defaultPortion:104, minPortion:50, maxPortion:210, state:'égoutté', packageSize:160, drainedWeight:104, adjustable:true },
 ];
 
@@ -578,6 +578,9 @@ function clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v));}
 function getStep(food){if(food.unitWeight)return food.unitWeight;if(food.kcalPer100>=400)return 5;return 10;}
 // Fibres : l'échelle porte sur ce que la portion apporte réellement, pas sur
 // la teneur aux 100 g. Repère adulte : 30 g par jour.
+// Valeurs génériques d'après Ciqual (ANSES). Confirmées sur étiquette :
+// Weetabix, pain au levain, purée de fruits. Restent estimés : muesli
+// Favrichon, toast, chocolat Lindt 85 %.
 const FIBRE_TARGET=30;
 function fibreOf(f,qty){return f&&f.fibPer100?+(qty*f.fibPer100/100).toFixed(1):0;}
 function fibreDots(g){if(g<0.5)return 0;if(g<1)return 1;if(g<2.5)return 2;if(g<5)return 3;if(g<8)return 4;return 5;}
