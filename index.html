@@ -173,9 +173,6 @@ body {
 .menu-totals strong { font-weight: 700; }
 .menu-herbs { font-size: 0.82rem; color: var(--accent); font-style: italic; margin: 8px 0 2px; }
 .menu-tip { font-size: 0.78rem; color: var(--text-secondary); margin: 4px 0; line-height: 1.4; }
-.mode-selector { display: flex; gap: 6px; margin: 12px 0; flex-wrap: wrap; }
-.mode-btn { padding: 7px 14px; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 500; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
-.mode-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 @media (min-width: 500px) { .view { max-width: 460px; margin: 0 auto; } .bottom-nav { justify-content: center; } .bottom-nav button { max-width: 120px; } }
 .view-header { position: relative; }
 .btn-goals { position: absolute; top: 18px; right: 38px; height: 30px; padding: 0 11px 0 9px; border-radius: var(--radius-full); border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); font-family: inherit; font-size: 0.72rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; -webkit-tap-highlight-color: transparent; }
@@ -183,9 +180,10 @@ body {
 .btn-goals:active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
 .meal-card { cursor: pointer; }
 .meal-chevron { color: var(--text-light); font-size: 1.25rem; line-height: 1; flex-shrink: 0; }
-.share-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 4px 0 12px; }
-.share-label { font-size: 0.78rem; color: var(--text-secondary); font-weight: 500; }
-.share-btn { padding: 6px 12px; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 500; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+.share-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin: 0 0 4px; }
+.share-row #btn-solve { margin-left: auto; flex-shrink: 0; padding: 8px 13px; font-size: 0.82rem; border: 1.5px solid var(--accent); color: var(--accent); }
+.share-label { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin: 14px 0 8px; }
+.share-btn { padding: 6px 10px; border-radius: var(--radius-full); font-size: 0.74rem; font-weight: 500; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
 .share-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 .btn-help { position: absolute; top: 18px; right: 0; width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); font-size: 0.9rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
 .btn-help:active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
@@ -260,8 +258,8 @@ body {
           <div class="qo-detail">Construire l'assiette</div>
         </button>
         <button class="quick-option" id="qo-hipro">
-          <div class="qo-title">Supplément protéiné</div>
-          <div class="qo-detail">HiPRO · 160 kcal · 25 g prot.</div>
+          <div class="qo-title">Complément protéiné</div>
+          <div class="qo-detail">Choisir lequel</div>
         </button>
       </div>
     </div>
@@ -277,16 +275,12 @@ body {
       <div class="compose-stat"><div class="cs-value" id="cs-budget-prot">0</div><div class="cs-label">budget prot.</div></div>
     </div>
     <div id="compose-warnings"></div>
-    <div class="mode-selector">
-      <button class="mode-btn active" data-mode="equilibre">Équilibre</button>
-      <button class="mode-btn" data-mode="leger">Léger</button>
-      <button class="mode-btn" data-mode="copieux">Copieux</button>
-    </div>
+    <div class="share-label">Ce repas vise</div>
     <div class="share-row">
-      <span class="share-label">Ce repas vise</span>
       <button class="share-btn" data-share="0.34">Un tiers</button>
       <button class="share-btn" data-share="0.5">La moitié</button>
       <button class="share-btn active" data-share="1">Tout le reste</button>
+      <button class="btn btn-secondary btn-sm" id="btn-solve">Équilibrer</button>
     </div>
     <div class="plate-section" id="plate-section">
       <h3>Dans l'assiette</h3>
@@ -294,7 +288,6 @@ body {
       <div class="text-center mt-8" id="plate-empty"><span style="color:var(--text-light);font-size:0.85rem">Ajouter des aliments ci-dessous</span></div>
     </div>
     <div class="actions-row">
-      <button class="btn btn-secondary btn-sm" id="btn-solve">Équilibrer</button>
       <button class="btn btn-primary btn-sm" id="btn-add-plate">Ajouter à la journée</button>
     </div>
     <div class="category-tabs" id="category-tabs"></div>
@@ -366,6 +359,13 @@ body {
     </div>
   </div>
 
+  <div class="modal-overlay" id="modal-supplement">
+    <div class="modal-sheet">
+      <div class="modal-header"><h2>Complément protéiné</h2><button class="modal-close" id="close-supplement">&times;</button></div>
+      <div class="food-list" id="supplement-list"></div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="modal-edit-meal">
     <div class="modal-sheet">
       <div class="modal-header"><h2 id="em-title">Modifier le repas</h2><button class="modal-close" id="close-edit-meal">&times;</button></div>
@@ -391,17 +391,17 @@ body {
       <div class="help-h">Essayez en trente secondes</div>
       <div class="help-step"><span class="help-num">1</span><span>Onglet <b>Menus</b>, appuyez sur une recette. Les jauges d'<b>Aujourd'hui</b> ont bougé.</span></div>
       <div class="help-step"><span class="help-num">2</span><span>Onglet <b>Composer</b>, ajoutez du poulet, du riz et des brocolis, sans vous soucier des quantités.</span></div>
-      <div class="help-step"><span class="help-num">3</span><span>Appuyez sur <b>Équilibrer</b> : les grammages se posent sur ce qu'il reste de la journée.</span></div>
+      <div class="help-step"><span class="help-num">3</span><span>Dites quelle part de la journée ce repas doit couvrir, puis appuyez sur <b>Équilibrer</b>, au bout de la même ligne : les grammages se posent tout seuls.</span></div>
       <div class="help-step"><span class="help-num">4</span><span>Posez un cadenas sur le riz, changez sa quantité, rééquilibrez : le poulet se réajuste autour.</span></div>
 
       <div class="help-h">Les quatre onglets</div>
       <div class="help-p"><b>Aujourd'hui</b> : deux jauges, les calories et les protéines, avec ce qu'il reste avant la cible. Un appui sur un repas déjà compté rouvre son détail : on corrige les grammages, on met à jour, les jauges suivent. La croix le retire.</div>
-      <div class="help-p"><b>Composer</b> : on choisit les aliments, l'application fixe les grammages. Le cadenas fige une quantité, par exemple une boîte entière, et le reste s'ajuste autour. Trois humeurs : léger, équilibre, copieux.</div>
+      <div class="help-p"><b>Composer</b> : on choisit les aliments, l'application fixe les grammages. Le cadenas fige une quantité, par exemple une boîte entière, et le reste s'ajuste autour.</div>
       <div class="help-p"><b>Menus</b> : des repas complets déjà calculés, versés dans la journée d'un appui.</div>
       <div class="help-p"><b>Aliments</b> : la liste et sa recherche, avec un « + » qui ajoute la portion habituelle.</div>
 
       <div class="help-h">Un repas ne vise pas toute la journée</div>
-      <div class="help-p">Sous les humeurs, la ligne <b>« Ce repas vise »</b> dit quelle part du reste de la journée l'assiette doit couvrir : un tiers, la moitié, ou tout. L'application choisit d'elle-même selon l'heure où en est la journée, et il suffit d'un appui pour la contredire. Sans cela, un repas pris tôt le matin raflerait le budget entier.</div>
+      <div class="help-p">La ligne <b>« Ce repas vise »</b> dit quelle part du reste de la journée l'assiette doit couvrir : un tiers, la moitié, ou tout. L'application choisit d'elle-même selon l'avancement de la journée, et il suffit d'un appui pour la contredire. Sans cela, un repas pris tôt le matin raflerait le budget entier. <b>Équilibrer</b> se trouve au bout de cette ligne : on choisit la part, puis on équilibre.</div>
 
       <div class="help-h">Les objectifs</div>
       <div class="help-p">Le bouton <b>Objectifs</b>, en haut à droite : les calories et les protéines visées par jour, et leurs marges. Tout le reste en découle, y compris les quantités que propose le composeur.</div>
@@ -565,10 +565,12 @@ function getStep(food){if(food.unitWeight)return food.unitWeight;if(food.kcalPer
 function protRatio(f){if(!f.kcalPer100)return 0;return f.protPer100*4/f.kcalPer100*100;}
 function protClass(f){const r=protRatio(f);if(r>=25)return'prot-green';if(r>=10)return'prot-orange';return'prot-red';}
 
+// Plafond de portion appliqué par le solveur : au-delà, on préfère avertir
+// qu'il manque des protéines plutôt que servir une portion invraisemblable.
+const PORTION_CEILING=1.5;
 const CAT_PRI=['legumes','proteines','fromages','feculents','complements','matieres_grasses','desserts','boissons','condiments','petit_dejeuner'];
 
 function solveMeal(mealItems, budget, getFoodById, options={}) {
-  const mode = options.mode || 'equilibre';
   const items = mealItems.map(i=>({...i, food:getFoodById(i.foodId)})).filter(i=>i.food);
   const locked = items.filter(i=>i.locked), unlocked = items.filter(i=>!i.locked);
   const lt = locked.reduce((a,i)=>{ const v=calcItem(i.food,i.quantity); return{kcal:a.kcal+v.kcal,prot:a.prot+v.prot}; },{kcal:0,prot:0});
@@ -578,10 +580,10 @@ function solveMeal(mealItems, budget, getFoodById, options={}) {
   for(const item of unlocked){
     const f=item.food, c=f.category;
     if(c==='legumes'){ const q=clamp(f.defaultPortion,f.minPortion,f.maxPortion); res.set(item.foodId,q); const v=calcItem(f,q); rK-=v.kcal; rP-=v.prot; continue; }
-    if(c==='proteines'){ let q=rP>0&&f.protPer100>0?Math.round(rP/f.protPer100*100):f.minPortion; if(mode==='leger')q=Math.min(q,f.defaultPortion); else if(mode==='copieux')q=Math.max(q,f.defaultPortion); else q=Math.min(q,Math.round(f.defaultPortion*1.5)); const cl=clamp(q,f.minPortion,f.maxPortion); res.set(item.foodId,cl); const v=calcItem(f,cl); rK-=v.kcal; rP-=v.prot; continue; }
-    if(c==='feculents'){ let q; if(rK>0&&f.kcalPer100>0){ const fr=mode==='leger'?0.35:mode==='copieux'?0.7:0.55; q=Math.round(rK*fr/f.kcalPer100*100); }else{ q=mode==='leger'?f.minPortion:f.defaultPortion; } const cl=clamp(q,f.minPortion,f.maxPortion); res.set(item.foodId,cl); const v=calcItem(f,cl); rK-=v.kcal; rP-=v.prot; continue; }
-    if(c==='complements'){ if(rP>5&&f.protPer100>0){ let q=Math.round(rP/f.protPer100*100); if(mode==='leger')q=Math.min(q,f.defaultPortion); else if(mode!=='copieux')q=Math.min(q,Math.round(f.defaultPortion*1.5)); const cl=clamp(q,f.minPortion,f.maxPortion); res.set(item.foodId,cl); const v=calcItem(f,cl); rK-=v.kcal; rP-=v.prot; }else{ res.set(item.foodId,0); } continue; }
-    if(c==='matieres_grasses'){ if(rK>50&&f.kcalPer100>0){ let q=Math.round(Math.min(rK*0.3,130)/f.kcalPer100*100); if(mode==='leger')q=Math.min(q,5); const cl=clamp(q,f.minPortion,f.maxPortion); res.set(item.foodId,cl); const v=calcItem(f,cl); rK-=v.kcal; rP-=v.prot; }else{ res.set(item.foodId,0); } continue; }
+    if(c==='proteines'){ let q=rP>0&&f.protPer100>0?Math.round(rP/f.protPer100*100):f.minPortion; q=Math.min(q,Math.round(f.defaultPortion*PORTION_CEILING)); const cl=clamp(q,f.minPortion,f.maxPortion); res.set(item.foodId,cl); const v=calcItem(f,cl); rK-=v.kcal; rP-=v.prot; continue; }
+    if(c==='feculents'){ let q; if(rK>0&&f.kcalPer100>0){ q=Math.round(rK*0.55/f.kcalPer100*100); }else{ q=f.defaultPortion; } const cl=clamp(q,f.minPortion,f.maxPortion); res.set(item.foodId,cl); const v=calcItem(f,cl); rK-=v.kcal; rP-=v.prot; continue; }
+    if(c==='complements'){ if(rP>5&&f.protPer100>0){ let q=Math.min(Math.round(rP/f.protPer100*100),Math.round(f.defaultPortion*PORTION_CEILING)); const cl=clamp(q,f.minPortion,f.maxPortion); res.set(item.foodId,cl); const v=calcItem(f,cl); rK-=v.kcal; rP-=v.prot; }else{ res.set(item.foodId,0); } continue; }
+    if(c==='matieres_grasses'){ if(rK>50&&f.kcalPer100>0){ const q=Math.round(Math.min(rK*0.3,130)/f.kcalPer100*100); const cl=clamp(q,f.minPortion,f.maxPortion); res.set(item.foodId,cl); const v=calcItem(f,cl); rK-=v.kcal; rP-=v.prot; }else{ res.set(item.foodId,0); } continue; }
     res.set(item.foodId,item.quantity); const v=calcItem(f,item.quantity); rK-=v.kcal; rP-=v.prot;
   }
   const r5=v=>Math.round(v/5)*5;
@@ -596,7 +598,7 @@ function solveMeal(mealItems, budget, getFoodById, options={}) {
 // ══════════════════════════════════════════
 // APP
 // ══════════════════════════════════════════
-let allFoods=[...defaultFoods], plate=[], composeMode='equilibre', composeShare=1, editEntry=null;
+let allFoods=[...defaultFoods], plate=[], composeShare=1, editEntry=null;
 function getFoodById(id){return allFoods.find(f=>f.id===id);}
 function formatDate(s){const d=new Date(s+'T12:00:00');return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});}
 function formatNum(n){return n>=1000?n.toLocaleString('fr-FR'):String(n);}
@@ -706,7 +708,18 @@ function setupQuickPanel(){
   document.getElementById('qo-breakfast').addEventListener('click',()=>{addBreakfast();closeQP();});
   document.getElementById('qo-external').addEventListener('click',()=>{openModal('modal-external');closeQP();});
   document.getElementById('qo-compose').addEventListener('click',()=>{closeQP();plate=[];switchView('view-compose');});
-  document.getElementById('qo-hipro').addEventListener('click',()=>{addQuick('hipro');closeQP();});
+  document.getElementById('qo-hipro').addEventListener('click',()=>{openSupplements();closeQP();});
+  document.getElementById('close-supplement').addEventListener('click',()=>closeModal('modal-supplement'));
+  document.getElementById('modal-supplement').addEventListener('click',e=>{if(e.target.classList.contains('modal-overlay'))closeModal('modal-supplement');});
+}
+
+function openSupplements(){
+  const c=document.getElementById('supplement-list'), foods=allFoods.filter(f=>f.category==='complements');
+  c.innerHTML=foods.length?foods.map(f=>{const v=calcItem(f,f.defaultPortion);
+    return '<div class="food-item '+protClass(f)+'" data-food-id="'+f.id+'"><div class="fi-name">'+esc(f.name)+'</div><div class="fi-values">'+f.defaultPortion+' g · '+v.kcal+' kcal · '+v.prot+' g prot.</div></div>';
+  }).join(''):'<div class="empty-state">Aucun complément dans la liste.</div>';
+  c.querySelectorAll('.food-item').forEach(el=>el.addEventListener('click',()=>{addQuick(el.dataset.foodId);closeModal('modal-supplement');}));
+  openModal('modal-supplement');
 }
 function closeQP(){document.getElementById('quick-panel').classList.remove('open');document.getElementById('btn-add-meal').textContent='Ajouter un repas';}
 
@@ -733,7 +746,6 @@ function setupExternalModal(){
 
 function setupCompose(){
   renderCategoryTabs();
-  document.querySelectorAll('.mode-btn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');composeMode=b.dataset.mode;}));
   document.querySelectorAll('.share-btn').forEach(b=>b.addEventListener('click',()=>applyShare(parseFloat(b.dataset.share))));
   document.getElementById('btn-solve').addEventListener('click',runSolver);
   document.getElementById('btn-add-plate').addEventListener('click',()=>{
@@ -795,7 +807,7 @@ function updateCS(){
 
 function runSolver(){
   if(!plate.length)return;
-  const r=solveMeal(plate,mealBudget(),getFoodById,{mode:composeMode});
+  const r=solveMeal(plate,mealBudget(),getFoodById);
   plate=r.items;renderPlate();updateCS();
   const w=document.getElementById('compose-warnings');w.innerHTML=r.warnings.length?r.warnings.map(x=>'<div class="warning-box">'+esc(x)+'</div>').join(''):'';
 }
