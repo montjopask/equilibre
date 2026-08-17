@@ -174,6 +174,13 @@ body {
 .menu-herbs { font-size: 0.82rem; color: var(--accent); font-style: italic; margin: 8px 0 2px; }
 .menu-tip { font-size: 0.78rem; color: var(--text-secondary); margin: 4px 0; line-height: 1.4; }
 @media (min-width: 500px) { .view { max-width: 460px; margin: 0 auto; } .bottom-nav { justify-content: center; } .bottom-nav button { max-width: 120px; } }
+.fib { display: inline-flex; gap: 3px; align-items: center; }
+.fib-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+.fib-dot.on { background: var(--warm); }
+.fib-line { display: flex; justify-content: flex-end; margin-top: 5px; }
+.plate-item-controls .fib { margin-left: auto; }
+.fib-day { font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; margin: -6px 0 0; padding: 0 2px; }
+.fib-day strong { color: var(--text); font-weight: 700; }
 .view-header { position: relative; }
 .btn-goals { position: absolute; top: 18px; right: 38px; height: 30px; padding: 0 11px 0 9px; border-radius: var(--radius-full); border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); font-family: inherit; font-size: 0.72rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; -webkit-tap-highlight-color: transparent; }
 .btn-goals svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 1.8; fill: none; flex-shrink: 0; }
@@ -235,6 +242,10 @@ body {
           <div class="gauge-target-mark" id="g-prot-mark" style="left:100%"></div>
         </div>
       </div>
+    </div>
+    <div class="fib-day">
+      <span class="fib" id="fib-day-dots"></span>
+      <span id="fib-day-text">Fibres <strong>0 g</strong> · repère 30 g par jour</span>
     </div>
     <div class="meals-section">
       <h2>Repas</h2>
@@ -403,6 +414,9 @@ body {
       <div class="help-h">Un repas ne vise pas toute la journée</div>
       <div class="help-p">La ligne <b>« Ce repas vise »</b> dit quelle part du reste de la journée l'assiette doit couvrir : un tiers, la moitié, ou tout. L'application choisit d'elle-même selon l'avancement de la journée, et il suffit d'un appui pour la contredire. Sans cela, un repas pris tôt le matin raflerait le budget entier. <b>Équilibrer</b> se trouve au bout de cette ligne : on choisit la part, puis on équilibre.</div>
 
+      <div class="help-h">Les points caramel, ce sont les fibres</div>
+      <div class="help-p">De un à cinq points selon ce que la <b>portion</b> apporte réellement, et non selon la teneur aux 100 g : cinq points valent 8 g de fibres ou plus. Dans l'assiette, ils suivent la quantité qu'on règle. Rien n'apparaît pour les aliments qui n'en contiennent pas, viandes, poissons, fromages, laitages, huiles. Sous les jauges, la ligne du jour donne le total, avec le repère de 30 g conseillés à un adulte.</div>
+
       <div class="help-h">Les objectifs</div>
       <div class="help-p">Le bouton <b>Objectifs</b>, en haut à droite : les calories et les protéines visées par jour, et leurs marges. Tout le reste en découle, y compris les quantités que propose le composeur.</div>
 
@@ -450,28 +464,28 @@ const defaultFoods = [
   { id:'maquereau', name:'Maquereau (au naturel)', category:'proteines', kcalPer100:220, protPer100:19, defaultPortion:79, minPortion:50, maxPortion:160, state:'égoutté', packageSize:113, drainedWeight:79, adjustable:true },
   { id:'thon', name:'Thon au naturel', category:'proteines', kcalPer100:116, protPer100:26, defaultPortion:130, minPortion:56, maxPortion:200, state:'égoutté', packageSize:160, drainedWeight:130, adjustable:true },
   { id:'oeufs', name:'Œufs', category:'proteines', kcalPer100:155, protPer100:13, defaultPortion:120, minPortion:60, maxPortion:240, unitWeight:60, state:'entier', adjustable:true },
-  { id:'puree_legumes', name:'Purée de légumes (carottes, brocolis…)', category:'legumes', kcalPer100:61, protPer100:0.9, defaultPortion:200, minPortion:100, maxPortion:400, unitWeight:200, adjustable:false },
-  { id:'tofu', name:'Tofu (ferme)', category:'proteines', kcalPer100:144, protPer100:17, defaultPortion:100, minPortion:50, maxPortion:200, adjustable:true },
+  { id:'puree_legumes', name:'Purée de légumes (carottes, brocolis…)', category:'legumes', kcalPer100:61, fibPer100:2.5, protPer100:0.9, defaultPortion:200, minPortion:100, maxPortion:400, unitWeight:200, adjustable:false },
+  { id:'tofu', name:'Tofu (ferme)', category:'proteines', kcalPer100:144, fibPer100:1.2, protPer100:17, defaultPortion:100, minPortion:50, maxPortion:200, adjustable:true },
   { id:'parmesan', name:'Parmesan', category:'fromages', kcalPer100:431, protPer100:38, defaultPortion:20, minPortion:10, maxPortion:40, adjustable:true },
   { id:'emmental', name:'Emmental', category:'fromages', kcalPer100:380, protPer100:27, defaultPortion:30, minPortion:10, maxPortion:60, adjustable:true },
   { id:'gruyere', name:'Gruyère', category:'fromages', kcalPer100:413, protPer100:27, defaultPortion:30, minPortion:10, maxPortion:60, adjustable:true },
   { id:'mozzarella', name:'Mozzarella', category:'fromages', kcalPer100:280, protPer100:22, defaultPortion:60, minPortion:20, maxPortion:125, adjustable:true },
   { id:'chevre_frais', name:'Chèvre frais', category:'fromages', kcalPer100:200, protPer100:13, defaultPortion:30, minPortion:10, maxPortion:60, adjustable:true },
   { id:'feta', name:'Feta', category:'fromages', kcalPer100:264, protPer100:14, defaultPortion:30, minPortion:10, maxPortion:80, adjustable:true },
-  { id:'riz', name:'Riz', category:'feculents', kcalPer100:130, protPer100:2.7, defaultPortion:150, minPortion:50, maxPortion:300, state:'cuit', adjustable:true },
-  { id:'pates', name:'Pâtes', category:'feculents', kcalPer100:150, protPer100:5.5, defaultPortion:120, minPortion:50, maxPortion:250, state:'cuites', adjustable:true },
-  { id:'pates_fraiches', name:'Pâtes fraîches (tagliatelle)', category:'feculents', kcalPer100:160, protPer100:6, defaultPortion:120, minPortion:100, maxPortion:250, state:'cuites', adjustable:true },
-  { id:'pommes_de_terre', name:'Pommes de terre', category:'feculents', kcalPer100:87, protPer100:1.9, defaultPortion:150, minPortion:50, maxPortion:350, state:'cuites', adjustable:true },
-  { id:'pain_levain', name:'Pain au levain', category:'feculents', kcalPer100:270, protPer100:9, defaultPortion:60, minPortion:30, maxPortion:120, adjustable:true },
-  { id:'haricots_blancs', name:'Haricots blancs (à l\'ail)', category:'feculents', kcalPer100:70, protPer100:5.3, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuits', adjustable:true },
-  { id:'haricots_rouges', name:'Haricots rouges', category:'feculents', kcalPer100:127, protPer100:8.7, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuits', adjustable:true },
-  { id:'pois_chiches', name:'Pois chiches', category:'feculents', kcalPer100:164, protPer100:8.9, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuits', adjustable:true },
-  { id:'lentilles', name:'Lentilles', category:'feculents', kcalPer100:116, protPer100:9, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuites', adjustable:true },
-  { id:'legumes_wok', name:'Légumes pour wok (surgelés)', category:'legumes', kcalPer100:35, protPer100:2, defaultPortion:300, minPortion:150, maxPortion:400, adjustable:false },
-  { id:'brocolis', name:'Brocolis', category:'legumes', kcalPer100:34, protPer100:2.8, defaultPortion:250, minPortion:150, maxPortion:400, adjustable:false },
-  { id:'chou_fleur', name:'Chou-fleur', category:'legumes', kcalPer100:25, protPer100:1.9, defaultPortion:250, minPortion:150, maxPortion:400, adjustable:false },
-  { id:'tomates_concassees', name:'Pulpe de tomate', category:'legumes', kcalPer100:20, protPer100:1.3, defaultPortion:200, minPortion:50, maxPortion:400, adjustable:false },
-  { id:'oignons', name:'Oignons', category:'legumes', kcalPer100:40, protPer100:1.1, defaultPortion:80, minPortion:30, maxPortion:150, adjustable:false },
+  { id:'riz', name:'Riz', category:'feculents', kcalPer100:130, fibPer100:1.1, protPer100:2.7, defaultPortion:150, minPortion:50, maxPortion:300, state:'cuit', adjustable:true },
+  { id:'pates', name:'Pâtes', category:'feculents', kcalPer100:150, fibPer100:1.8, protPer100:5.5, defaultPortion:120, minPortion:50, maxPortion:250, state:'cuites', adjustable:true },
+  { id:'pates_fraiches', name:'Pâtes fraîches (tagliatelle)', category:'feculents', kcalPer100:160, fibPer100:1.8, protPer100:6, defaultPortion:120, minPortion:100, maxPortion:250, state:'cuites', adjustable:true },
+  { id:'pommes_de_terre', name:'Pommes de terre', category:'feculents', kcalPer100:87, fibPer100:2.0, protPer100:1.9, defaultPortion:150, minPortion:50, maxPortion:350, state:'cuites', adjustable:true },
+  { id:'pain_levain', name:'Pain au levain', category:'feculents', kcalPer100:270, fibPer100:4.5, protPer100:9, defaultPortion:60, minPortion:30, maxPortion:120, adjustable:true },
+  { id:'haricots_blancs', name:'Haricots blancs (à l\'ail)', category:'feculents', kcalPer100:70, fibPer100:6.3, protPer100:5.3, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuits', adjustable:true },
+  { id:'haricots_rouges', name:'Haricots rouges', category:'feculents', kcalPer100:127, fibPer100:7.0, protPer100:8.7, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuits', adjustable:true },
+  { id:'pois_chiches', name:'Pois chiches', category:'feculents', kcalPer100:164, fibPer100:7.6, protPer100:8.9, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuits', adjustable:true },
+  { id:'lentilles', name:'Lentilles', category:'feculents', kcalPer100:116, fibPer100:7.9, protPer100:9, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuites', adjustable:true },
+  { id:'legumes_wok', name:'Légumes pour wok (surgelés)', category:'legumes', kcalPer100:35, fibPer100:2.5, protPer100:2, defaultPortion:300, minPortion:150, maxPortion:400, adjustable:false },
+  { id:'brocolis', name:'Brocolis', category:'legumes', kcalPer100:34, fibPer100:3.0, protPer100:2.8, defaultPortion:250, minPortion:150, maxPortion:400, adjustable:false },
+  { id:'chou_fleur', name:'Chou-fleur', category:'legumes', kcalPer100:25, fibPer100:1.8, protPer100:1.9, defaultPortion:250, minPortion:150, maxPortion:400, adjustable:false },
+  { id:'tomates_concassees', name:'Pulpe de tomate', category:'legumes', kcalPer100:20, fibPer100:1.0, protPer100:1.3, defaultPortion:200, minPortion:50, maxPortion:400, adjustable:false },
+  { id:'oignons', name:'Oignons', category:'legumes', kcalPer100:40, fibPer100:2.6, protPer100:1.1, defaultPortion:80, minPortion:30, maxPortion:150, adjustable:false },
   { id:'huile_olive', name:"Huile d'olive", category:'matieres_grasses', kcalPer100:884, protPer100:0, defaultPortion:10, minPortion:0, maxPortion:20, adjustable:true },
   { id:'huile_coco', name:'Huile de coco', category:'matieres_grasses', kcalPer100:862, protPer100:0, defaultPortion:10, minPortion:0, maxPortion:20, adjustable:true },
   { id:'huile_sesame', name:'Huile de sésame', category:'matieres_grasses', kcalPer100:884, protPer100:0, defaultPortion:5, minPortion:0, maxPortion:15, adjustable:true },
@@ -480,11 +494,11 @@ const defaultFoods = [
   { id:'skyr', name:'Skyr (nature)', category:'complements', kcalPer100:60, protPer100:11, defaultPortion:150, minPortion:50, maxPortion:400, adjustable:true },
   { id:'hipro', name:'HiPRO boisson chocolat', category:'complements', kcalPer100:54, protPer100:7.6, defaultPortion:165, minPortion:165, maxPortion:330, unitWeight:165, packageSize:330, adjustable:false },
   { id:'hipro_pot', name:'HiPRO pot myrtille', category:'complements', kcalPer100:54, protPer100:9.4, defaultPortion:80, minPortion:80, maxPortion:160, unitWeight:80, packageSize:160, adjustable:false },
-  { id:'weetabix', name:'Weetabix', category:'desserts', kcalPer100:362, protPer100:11, defaultPortion:44, minPortion:22, maxPortion:66, unitWeight:22, adjustable:true },
-  { id:'muesli', name:'Muesli (Favrichon)', category:'desserts', kcalPer100:365, protPer100:10, defaultPortion:40, minPortion:20, maxPortion:60, adjustable:true },
-  { id:'flocons_avoine', name:'Flocons d\'avoine complets', category:'desserts', kcalPer100:370, protPer100:13, defaultPortion:40, minPortion:40, maxPortion:100, adjustable:true },
-  { id:'toast', name:'Toast (pain de mie)', category:'petit_dejeuner', kcalPer100:265, protPer100:8, defaultPortion:50, minPortion:25, maxPortion:100, unitWeight:25, adjustable:true },
-  { id:'confiture', name:'Confiture', category:'petit_dejeuner', kcalPer100:250, protPer100:0.3, defaultPortion:20, minPortion:10, maxPortion:40, adjustable:true },
+  { id:'weetabix', name:'Weetabix', category:'desserts', kcalPer100:362, fibPer100:10.0, protPer100:11, defaultPortion:44, minPortion:22, maxPortion:66, unitWeight:22, adjustable:true },
+  { id:'muesli', name:'Muesli (Favrichon)', category:'desserts', kcalPer100:365, fibPer100:7.0, protPer100:10, defaultPortion:40, minPortion:20, maxPortion:60, adjustable:true },
+  { id:'flocons_avoine', name:'Flocons d\'avoine complets', category:'desserts', kcalPer100:370, fibPer100:10.2, protPer100:13, defaultPortion:40, minPortion:40, maxPortion:100, adjustable:true },
+  { id:'toast', name:'Toast (pain de mie)', category:'petit_dejeuner', kcalPer100:265, fibPer100:3.0, protPer100:8, defaultPortion:50, minPortion:25, maxPortion:100, unitWeight:25, adjustable:true },
+  { id:'confiture', name:'Confiture', category:'petit_dejeuner', kcalPer100:250, fibPer100:1.0, protPer100:0.3, defaultPortion:20, minPortion:10, maxPortion:40, adjustable:true },
   { id:'sauce_soja', name:'Sauce soja (réduite en sel)', category:'condiments', kcalPer100:53, protPer100:8, defaultPortion:10, minPortion:5, maxPortion:20, adjustable:false },
   { id:'nuoc_mam', name:'Nuoc-mâm', category:'condiments', kcalPer100:35, protPer100:5, defaultPortion:5, minPortion:2, maxPortion:15, adjustable:false },
   { id:'citron', name:'Citron', category:'condiments', kcalPer100:29, protPer100:1.1, defaultPortion:15, minPortion:5, maxPortion:50, adjustable:false },
@@ -497,9 +511,9 @@ const defaultFoods = [
   { id:'lait_epeautre', name:'Lait d\'épeautre (végétal)', category:'desserts', kcalPer100:55, protPer100:1, defaultPortion:100, minPortion:30, maxPortion:250, adjustable:false },
   { id:'kombucha', name:'Kombucha', category:'boissons', kcalPer100:17, protPer100:0, defaultPortion:330, minPortion:100, maxPortion:660, unitWeight:330, packageSize:330, adjustable:false },
   { id:'creme_fraiche', name:'Crème fraîche légère', category:'matieres_grasses', kcalPer100:170, protPer100:2.5, defaultPortion:15, minPortion:5, maxPortion:50, adjustable:false },
-  { id:'chocolat_lindt_85', name:'Chocolat Lindt 85 %', category:'desserts', kcalPer100:603, protPer100:9, defaultPortion:10, minPortion:10, maxPortion:50, unitWeight:10, adjustable:false },
-  { id:'pate_cacahuetes', name:'Pâte de cacahuètes', category:'matieres_grasses', kcalPer100:588, protPer100:25, defaultPortion:15, minPortion:5, maxPortion:30, adjustable:false },
-  { id:'puree_fruits', name:'Purée de fruits (sans sucres aj.)', category:'desserts', kcalPer100:58, protPer100:0, defaultPortion:90, minPortion:90, maxPortion:270, unitWeight:90, adjustable:false },
+  { id:'chocolat_lindt_85', name:'Chocolat Lindt 85 %', category:'desserts', kcalPer100:603, fibPer100:12.0, protPer100:9, defaultPortion:10, minPortion:10, maxPortion:50, unitWeight:10, adjustable:false },
+  { id:'pate_cacahuetes', name:'Pâte de cacahuètes', category:'matieres_grasses', kcalPer100:588, fibPer100:8.0, protPer100:25, defaultPortion:15, minPortion:5, maxPortion:30, adjustable:false },
+  { id:'puree_fruits', name:'Purée de fruits (sans sucres aj.)', category:'desserts', kcalPer100:58, fibPer100:1.5, protPer100:0, defaultPortion:90, minPortion:90, maxPortion:270, unitWeight:90, adjustable:false },
   { id:'thon_huile_olive', name:'Thon blanc à l\'huile d\'olive', category:'proteines', kcalPer100:186, protPer100:25, defaultPortion:104, minPortion:50, maxPortion:210, state:'égoutté', packageSize:160, drainedWeight:104, adjustable:true },
 ];
 
@@ -562,6 +576,20 @@ function gaugeState(consumed, target, margin) { if(consumed<target-margin)return
 function gaugePercent(consumed, target) { if(target<=0)return 100; return Math.min(Math.round(consumed/target*100),120); }
 function clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v));}
 function getStep(food){if(food.unitWeight)return food.unitWeight;if(food.kcalPer100>=400)return 5;return 10;}
+// Fibres : l'échelle porte sur ce que la portion apporte réellement, pas sur
+// la teneur aux 100 g. Repère adulte : 30 g par jour.
+const FIBRE_TARGET=30;
+function fibreOf(f,qty){return f&&f.fibPer100?+(qty*f.fibPer100/100).toFixed(1):0;}
+function fibreDots(g){if(g<0.5)return 0;if(g<1)return 1;if(g<2.5)return 2;if(g<5)return 3;if(g<8)return 4;return 5;}
+function fibreHTML(f,qty){
+  const g=fibreOf(f,qty),n=fibreDots(g);
+  if(!n)return '';
+  let h='<span class="fib" title="Fibres : '+g+' g">';
+  for(let i=0;i<5;i++)h+='<span class="fib-dot'+(i<n?' on':'')+'"></span>';
+  return h+'</span>';
+}
+function dayFibre(day){let t=0;for(const e of day.entries){if(!e.items)continue;for(const i of e.items){const f=getFoodById(i.foodId);if(f)t+=fibreOf(f,i.quantity);}}return +t.toFixed(1);}
+
 function protRatio(f){if(!f.kcalPer100)return 0;return f.protPer100*4/f.kcalPer100*100;}
 function protClass(f){const r=protRatio(f);if(r>=25)return'prot-green';if(r>=10)return'prot-orange';return'prot-red';}
 
@@ -632,6 +660,9 @@ function renderToday(){
   document.getElementById('g-prot-consumed').textContent=Math.round(tP)+' g';
   document.getElementById('g-prot-remaining').textContent=Math.round(rP)+' g restants';
   const pF=document.getElementById('g-prot-fill'); pF.style.width=Math.min(gaugePercent(tP,s.targetProt),100)+'%'; pF.dataset.state=gaugeState(tP,s.targetProt,s.marginProt);
+  const fib=dayFibre(day), fn=Math.min(5,Math.floor(fib/FIBRE_TARGET*5));
+  document.getElementById('fib-day-dots').innerHTML=Array.from({length:5},(_,i)=>'<span class="fib-dot'+(i<fn?' on':'')+'"></span>').join('');
+  document.getElementById('fib-day-text').innerHTML='Fibres <strong>'+fib+' g</strong> · repère '+FIBRE_TARGET+' g par jour';
   renderMealsList(day);
 }
 
@@ -668,7 +699,7 @@ function renderEditItems(){
   c.innerHTML=editEntry.items.map((item,idx)=>{
     const f=getFoodById(item.foodId); if(!f)return'';
     const v=calcItem(f,item.quantity);
-    return '<div class="plate-item"><div class="plate-item-header"><div class="plate-item-name">'+esc(f.name)+'</div><div class="plate-item-values">'+v.kcal+' kcal · '+v.prot+' g</div><button class="plate-item-remove" data-eidx="'+idx+'">&times;</button></div><div class="plate-item-controls"><button class="qty-btn" data-eaction="minus" data-eidx="'+idx+'">&minus;</button><input class="qty-input" type="number" inputmode="numeric" value="'+item.quantity+'" data-eidx="'+idx+'"><span class="qty-unit">g</span><button class="qty-btn" data-eaction="plus" data-eidx="'+idx+'">+</button></div></div>';
+    return '<div class="plate-item"><div class="plate-item-header"><div class="plate-item-name">'+esc(f.name)+'</div><div class="plate-item-values">'+v.kcal+' kcal · '+v.prot+' g</div><button class="plate-item-remove" data-eidx="'+idx+'">&times;</button></div><div class="plate-item-controls"><button class="qty-btn" data-eaction="minus" data-eidx="'+idx+'">&minus;</button><input class="qty-input" type="number" inputmode="numeric" value="'+item.quantity+'" data-eidx="'+idx+'"><span class="qty-unit">g</span><button class="qty-btn" data-eaction="plus" data-eidx="'+idx+'">+</button>'+fibreHTML(f,item.quantity)+'</div></div>';
   }).join('');
   c.querySelectorAll('.qty-btn').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.eidx,f=getFoodById(editEntry.items[i].foodId),st=getStep(f),q=editEntry.items[i].quantity;editEntry.items[i].quantity=b.dataset.eaction==='plus'?Math.min(q+st,f.maxPortion):Math.max(q-st,f.minPortion);renderEditItems();}));
   c.querySelectorAll('.qty-input').forEach(inp=>inp.addEventListener('change',()=>{const i=+inp.dataset.eidx,f=getFoodById(editEntry.items[i].foodId);editEntry.items[i].quantity=clamp(parseInt(inp.value)||f.defaultPortion,f.minPortion,f.maxPortion);renderEditItems();}));
@@ -764,7 +795,7 @@ function renderCategoryTabs(){
 
 function renderComposeFoodList(catId){
   const c=document.getElementById('compose-food-list'), foods=allFoods.filter(f=>f.category===catId), inP=new Set(plate.map(p=>p.foodId));
-  c.innerHTML=foods.map(f=>{const v=calcItem(f,f.defaultPortion);return'<div class="food-item'+(inP.has(f.id)?' hidden':'')+'" data-food-id="'+f.id+'"><div class="fi-name">'+esc(f.name)+(f.state?' <span class="fi-state">('+f.state+')</span>':'')+'</div><div class="fi-values">'+v.kcal+' kcal · '+v.prot+' g</div></div>';}).join('');
+  c.innerHTML=foods.map(f=>{const v=calcItem(f,f.defaultPortion);return'<div class="food-item'+(inP.has(f.id)?' hidden':'')+'" data-food-id="'+f.id+'"><div class="fi-name">'+esc(f.name)+(f.state?' <span class="fi-state">('+f.state+')</span>':'')+'</div><div class="fi-values">'+v.kcal+' kcal · '+v.prot+' g'+(fibreHTML(f,f.defaultPortion)?'<div class="fib-line">'+fibreHTML(f,f.defaultPortion)+'</div>':'')+'</div></div>';}).join('');
   c.querySelectorAll('.food-item').forEach(el=>el.addEventListener('click',()=>{addToPlate(el.dataset.foodId);el.classList.add('hidden');}));
 }
 
@@ -787,7 +818,7 @@ function renderPlate(){
   c.innerHTML=plate.map((item,idx)=>{
     const f=getFoodById(item.foodId);if(!f)return'';const v=calcItem(f,item.quantity),hp=f.drainedWeight||f.packageSize;
     const ls=item.locked?'<svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>':'<svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>';
-    return '<div class="plate-item" data-idx="'+idx+'"><div class="plate-item-header"><div class="plate-item-name">'+esc(f.name)+'</div><div class="plate-item-values">'+v.kcal+' kcal · '+v.prot+' g</div><button class="plate-item-remove" data-idx="'+idx+'">&times;</button></div><div class="plate-item-controls"><button class="qty-btn" data-action="minus" data-idx="'+idx+'">&minus;</button><input class="qty-input" type="number" inputmode="numeric" value="'+item.quantity+'" data-idx="'+idx+'"><span class="qty-unit">g</span><button class="qty-btn" data-action="plus" data-idx="'+idx+'">+</button><button class="lock-btn'+(item.locked?' locked':'')+'" data-idx="'+idx+'">'+ls+'</button></div>'+(hp&&!item.locked?'<button class="whole-can-btn" data-idx="'+idx+'">Toute la boîte · '+hp+' g</button>':'')+'</div>';
+    return '<div class="plate-item" data-idx="'+idx+'"><div class="plate-item-header"><div class="plate-item-name">'+esc(f.name)+'</div><div class="plate-item-values">'+v.kcal+' kcal · '+v.prot+' g</div><button class="plate-item-remove" data-idx="'+idx+'">&times;</button></div><div class="plate-item-controls"><button class="qty-btn" data-action="minus" data-idx="'+idx+'">&minus;</button><input class="qty-input" type="number" inputmode="numeric" value="'+item.quantity+'" data-idx="'+idx+'"><span class="qty-unit">g</span><button class="qty-btn" data-action="plus" data-idx="'+idx+'">+</button><button class="lock-btn'+(item.locked?' locked':'')+'" data-idx="'+idx+'">'+ls+'</button>'+fibreHTML(f,item.quantity)+'</div>'+(hp&&!item.locked?'<button class="whole-can-btn" data-idx="'+idx+'">Toute la boîte · '+hp+' g</button>':'')+'</div>';
   }).join('');
   c.querySelectorAll('.qty-btn').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.idx,f=getFoodById(plate[i].foodId),st=getStep(f);if(b.dataset.action==='plus')plate[i].quantity=Math.min(plate[i].quantity+st,f.maxPortion);else plate[i].quantity=Math.max(plate[i].quantity-st,f.minPortion);renderPlate();updateCS();}));
   c.querySelectorAll('.qty-input').forEach(inp=>inp.addEventListener('change',()=>{const i=+inp.dataset.idx,f=getFoodById(plate[i].foodId);let v=parseInt(inp.value)||f.defaultPortion;plate[i].quantity=clamp(v,f.minPortion,f.maxPortion);renderPlate();updateCS();}));
@@ -828,7 +859,7 @@ function renderFoods(filter=''){
   const c=document.getElementById('foods-list'),s=filter.toLowerCase(),gr={};
   for(const cat of categories)gr[cat.id]={name:cat.name,foods:[]};
   for(const f of allFoods){if(s&&!f.name.toLowerCase().includes(s))continue;if(gr[f.category])gr[f.category].foods.push(f);}
-  let h='';for(const cat of categories){const g=gr[cat.id];if(!g.foods.length)continue;h+='<div class="food-category-header">'+esc(g.name)+'</div>';h+=g.foods.map(f=>{const v=calcItem(f,f.defaultPortion);return'<div class="food-item '+protClass(f)+'" data-food-id="'+f.id+'"><div class="fi-name">'+esc(f.name)+(f.state?' <span class="fi-state">('+f.state+')</span>':'')+'</div><div class="fi-values">'+f.defaultPortion+' g · '+v.kcal+' kcal · '+v.prot+' g</div>'+(f.custom?'<button class="fi-del" title="Supprimer">&times;</button>':'')+'<button class="fi-add" title="Ajouter">+</button></div>';}).join('');}
+  let h='';for(const cat of categories){const g=gr[cat.id];if(!g.foods.length)continue;h+='<div class="food-category-header">'+esc(g.name)+'</div>';h+=g.foods.map(f=>{const v=calcItem(f,f.defaultPortion);return'<div class="food-item '+protClass(f)+'" data-food-id="'+f.id+'"><div class="fi-name">'+esc(f.name)+(f.state?' <span class="fi-state">('+f.state+')</span>':'')+'</div><div class="fi-values">'+f.defaultPortion+' g · '+v.kcal+' kcal · '+v.prot+' g'+(fibreHTML(f,f.defaultPortion)?'<div class="fib-line">'+fibreHTML(f,f.defaultPortion)+'</div>':'')+'</div>'+(f.custom?'<button class="fi-del" title="Supprimer">&times;</button>':'')+'<button class="fi-add" title="Ajouter">+</button></div>';}).join('');}
   c.innerHTML=h||'<div class="empty-state">Aucun aliment trouvé.</div>';
   c.querySelectorAll('.fi-add').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const el=b.closest('.food-item');addQuick(el.dataset.foodId);el.classList.add('fi-added');setTimeout(()=>el.classList.remove('fi-added'),600);}));
   c.querySelectorAll('.fi-del').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(confirm('Supprimer cet aliment ?'))deleteCustomFood(b.closest('.food-item').dataset.foodId);}));
