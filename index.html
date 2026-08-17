@@ -177,6 +177,17 @@ body {
 .mode-btn { padding: 7px 14px; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 500; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
 .mode-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 @media (min-width: 500px) { .view { max-width: 460px; margin: 0 auto; } .bottom-nav { justify-content: center; } .bottom-nav button { max-width: 120px; } }
+.view-header { position: relative; }
+.btn-help { position: absolute; top: 18px; right: 0; width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); font-size: 0.9rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+.btn-help:active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+.help-step { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; font-size: 0.88rem; line-height: 1.5; }
+.help-num { flex-shrink: 0; width: 21px; height: 21px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+.help-h { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin: 22px 0 10px; }
+.help-h:first-of-type { margin-top: 4px; }
+.help-p { font-size: 0.88rem; line-height: 1.55; color: var(--text); margin-bottom: 9px; }
+.help-p b { font-weight: 600; }
+.help-dot { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 1px; }
+.help-foot { font-size: 0.8rem; line-height: 1.5; color: var(--text-secondary); margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
 .mt-8 { margin-top: 8px; } .mt-16 { margin-top: 16px; } .mb-8 { margin-bottom: 8px; } .mb-16 { margin-bottom: 16px; } .text-center { text-align: center; } .hidden { display: none !important; }
   </style>
 </head>
@@ -187,6 +198,7 @@ body {
     <div class="view-header">
       <h1>Aujourd'hui</h1>
       <div class="date" id="today-date"></div>
+      <button class="btn-help" id="btn-help" aria-label="Comment ça marche">?</button>
     </div>
     <div class="gauges">
       <div class="gauge-card">
@@ -238,8 +250,8 @@ body {
           <div class="qo-detail">Construire l'assiette</div>
         </button>
         <button class="quick-option" id="qo-hipro">
-          <div class="qo-title">HiPRO</div>
-          <div class="qo-detail">160 kcal · 25 g prot.</div>
+          <div class="qo-title">Supplément protéiné</div>
+          <div class="qo-detail">HiPRO · 160 kcal · 25 g prot.</div>
         </button>
       </div>
     </div>
@@ -257,7 +269,6 @@ body {
     <div id="compose-warnings"></div>
     <div class="mode-selector">
       <button class="mode-btn active" data-mode="equilibre">Équilibre</button>
-      <button class="mode-btn" data-mode="sans_reste">Sans reste</button>
       <button class="mode-btn" data-mode="leger">Léger</button>
       <button class="mode-btn" data-mode="copieux">Copieux</button>
     </div>
@@ -339,12 +350,42 @@ body {
     </div>
   </div>
 
+  <div class="modal-overlay" id="modal-help">
+    <div class="modal-sheet">
+      <div class="modal-header"><h2>Comment ça marche</h2><button class="modal-close" id="close-help">&times;</button></div>
+
+      <div class="help-h">Essayez en trente secondes</div>
+      <div class="help-step"><span class="help-num">1</span><span>Onglet <b>Menus</b>, appuyez sur une recette. Les jauges d'<b>Aujourd'hui</b> ont bougé.</span></div>
+      <div class="help-step"><span class="help-num">2</span><span>Onglet <b>Composer</b>, ajoutez du poulet, du riz et des brocolis, sans vous soucier des quantités.</span></div>
+      <div class="help-step"><span class="help-num">3</span><span>Appuyez sur <b>Équilibrer</b> : les grammages se posent sur ce qu'il reste de la journée.</span></div>
+      <div class="help-step"><span class="help-num">4</span><span>Posez un cadenas sur le riz, changez sa quantité, rééquilibrez : le poulet se réajuste autour.</span></div>
+
+      <div class="help-h">Les cinq onglets</div>
+      <div class="help-p"><b>Aujourd'hui</b> : deux jauges, les calories et les protéines, avec ce qu'il reste avant la cible. Chaque repas se retire d'une croix.</div>
+      <div class="help-p"><b>Composer</b> : on choisit les aliments, l'application fixe les grammages. Le cadenas fige une quantité, par exemple une boîte entière, et le reste s'ajuste autour. Trois humeurs : léger, équilibre, copieux.</div>
+      <div class="help-p"><b>Menus</b> : des repas complets déjà calculés, versés dans la journée d'un appui.</div>
+      <div class="help-p"><b>Aliments</b> : la liste et sa recherche, avec un « + » qui ajoute la portion habituelle.</div>
+      <div class="help-p"><b>Objectifs</b> : les calories et les protéines visées par jour, et leurs marges. Tout le reste en découle, y compris les quantités proposées par le composeur.</div>
+
+      <div class="help-h">Le trait de couleur</div>
+      <div class="help-p">Il donne la part des calories apportée par les protéines :
+        <span class="help-dot" style="background:#4caf50"></span> vert au-delà de 25 %,
+        <span class="help-dot" style="background:#ff9800"></span> orange entre 10 et 25 %,
+        <span class="help-dot" style="background:#e53935"></span> rouge en dessous.</div>
+
+      <div class="help-foot">Les valeurs viennent des étiquettes réelles : féculents pesés cuits, conserves au poids égoutté. Les herbes et les épices ne sont pas comptées. Les saisies restent sur cet appareil, sans compte ni sauvegarde en ligne.</div>
+
+      <button class="btn btn-primary mt-16" id="btn-help-done">C'est parti</button>
+    </div>
+  </div>
+
   <!-- ═══════ BOTTOM NAV ═══════ -->
   <nav class="bottom-nav">
     <button class="active" data-view="view-today"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Aujourd'hui</button>
     <button data-view="view-compose"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>Composer</button>
     <button data-view="view-menus"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>Menus</button>
     <button data-view="view-foods"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span>Aliments</button>
+    <button id="nav-objectifs"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="10" cy="14" r="8"/><circle cx="10" cy="14" r="3.4"/><path d="M10 14L20.6 3.4"/><path d="M15.6 5.3l2.6 2.6"/><path d="M17.4 3.5l2.6 2.6"/></svg></span>Objectifs</button>
   </nav>
 
 <script>
@@ -526,8 +567,8 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 function init(){
   allFoods=[...defaultFoods,...loadCustomFoods()];
-  document.querySelectorAll('.bottom-nav button').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
-  setupQuickPanel(); setupExternalModal(); setupAddFoodModal(); setupSettingsModal(); setupCompose(); setupMenus();
+  document.querySelectorAll('.bottom-nav button[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+  setupQuickPanel(); setupExternalModal(); setupAddFoodModal(); setupSettingsModal(); setupHelpModal(); setupCompose(); setupMenus();
   renderToday(); renderFoods();
 }
 
@@ -701,8 +742,27 @@ function setupSettingsModal(){
     saveSettings({targetKcal:parseInt(document.getElementById('set-kcal').value)||1600,targetProt:parseInt(document.getElementById('set-prot').value)||112,marginKcal:parseInt(document.getElementById('set-margin-kcal').value)||50,marginProt:parseInt(document.getElementById('set-margin-prot').value)||5});
     closeModal('modal-settings');renderToday();
   });
+  document.getElementById('nav-objectifs').addEventListener('click',openSettings);
   const h1=document.querySelector('#view-today .view-header h1');
-  if(h1){h1.style.cursor='pointer';h1.addEventListener('click',()=>{const s=loadSettings();document.getElementById('set-kcal').value=s.targetKcal;document.getElementById('set-prot').value=s.targetProt;document.getElementById('set-margin-kcal').value=s.marginKcal;document.getElementById('set-margin-prot').value=s.marginProt;openModal('modal-settings');});}
+  if(h1){h1.style.cursor='pointer';h1.addEventListener('click',openSettings);}
+}
+
+function openSettings(){
+  const s=loadSettings();
+  document.getElementById('set-kcal').value=s.targetKcal;
+  document.getElementById('set-prot').value=s.targetProt;
+  document.getElementById('set-margin-kcal').value=s.marginKcal;
+  document.getElementById('set-margin-prot').value=s.marginProt;
+  openModal('modal-settings');
+}
+
+function setupHelpModal(){
+  const close=()=>closeModal('modal-help');
+  document.getElementById('btn-help').addEventListener('click',()=>openModal('modal-help'));
+  document.getElementById('close-help').addEventListener('click',close);
+  document.getElementById('btn-help-done').addEventListener('click',close);
+  document.getElementById('modal-help').addEventListener('click',e=>{if(e.target.classList.contains('modal-overlay'))close();});
+  if(!loadSettings().helpSeen){ openModal('modal-help'); saveSettings({helpSeen:true}); }
 }
 
 document.addEventListener('DOMContentLoaded', init);
