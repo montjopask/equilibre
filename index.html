@@ -477,11 +477,11 @@ const defaultFoods = [
   { id:'pates_fraiches', name:'Pâtes fraîches (tagliatelle)', category:'feculents', kcalPer100:160, fibPer100:1.8, protPer100:6, defaultPortion:120, minPortion:100, maxPortion:250, state:'cuites', adjustable:true },
   { id:'pommes_de_terre', name:'Pommes de terre', category:'feculents', kcalPer100:87, fibPer100:2.0, protPer100:1.9, defaultPortion:150, minPortion:50, maxPortion:350, state:'cuites', adjustable:true },
   { id:'pain_levain', name:'Pain au levain', category:'feculents', kcalPer100:270, fibPer100:4.5, protPer100:9, defaultPortion:60, minPortion:30, maxPortion:120, adjustable:true },
-  { id:'haricots_blancs', name:'Haricots blancs (à l\'ail)', category:'feculents', kcalPer100:70, fibPer100:6.3, protPer100:5.3, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuits', drainedWeight:130, adjustable:true },
-  { id:'haricots_rouges', name:'Haricots rouges', category:'feculents', kcalPer100:127, fibPer100:6.5, protPer100:8.7, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuits', drainedWeight:130, adjustable:true },
+  { id:'haricots_blancs', name:'Haricots blancs (à l\'ail)', category:'feculents', kcalPer100:70, fibPer100:6.3, protPer100:5.3, defaultPortion:130, minPortion:50, maxPortion:300, state:'cuits', drainedWeight:130, adjustable:true },
+  { id:'haricots_rouges', name:'Haricots rouges', category:'feculents', kcalPer100:127, fibPer100:6.5, protPer100:8.7, defaultPortion:130, minPortion:50, maxPortion:300, state:'cuits', drainedWeight:130, adjustable:true },
   { id:'pois_chiches', name:'Pois chiches', category:'feculents', kcalPer100:164, fibPer100:7.6, protPer100:8.9, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuits', adjustable:true },
-  { id:'lentilles', name:'Lentilles', category:'feculents', kcalPer100:116, fibPer100:3.9, protPer100:9, defaultPortion:200, minPortion:50, maxPortion:300, state:'cuites', drainedWeight:130, adjustable:true },
-  { id:'mais', name:'Maïs doux (conserve)', category:'feculents', kcalPer100:79, fibPer100:3.1, protPer100:2.4, defaultPortion:130, minPortion:50, maxPortion:260, state:'égoutté', drainedWeight:130, adjustable:true },
+  { id:'lentilles', name:'Lentilles', category:'feculents', kcalPer100:116, fibPer100:3.9, protPer100:9, defaultPortion:130, minPortion:50, maxPortion:300, state:'cuites', drainedWeight:130, adjustable:true },
+  { id:'mais', name:'Maïs doux (conserve)', category:'feculents', kcalPer100:80, fibPer100:3.1, protPer100:2.2, defaultPortion:130, minPortion:50, maxPortion:260, state:'égoutté', drainedWeight:130, adjustable:true },
   { id:'legumes_wok', name:'Légumes pour wok (surgelés)', category:'legumes', kcalPer100:35, fibPer100:2.5, protPer100:2, defaultPortion:300, minPortion:150, maxPortion:400, adjustable:false },
   { id:'brocolis', name:'Brocolis', category:'legumes', kcalPer100:34, fibPer100:3.0, protPer100:2.8, defaultPortion:250, minPortion:150, maxPortion:400, adjustable:false },
   { id:'chou_fleur', name:'Chou-fleur', category:'legumes', kcalPer100:25, fibPer100:1.8, protPer100:1.9, defaultPortion:250, minPortion:150, maxPortion:400, adjustable:false },
@@ -581,9 +581,8 @@ function getStep(food){if(food.unitWeight)return food.unitWeight;if(food.kcalPer
 // la teneur aux 100 g. Repère adulte : 30 g par jour.
 // Valeurs génériques d'après Ciqual (ANSES). Confirmées sur étiquette :
 // Weetabix, pain au levain, purée de fruits, toast, chocolat Lindt (0 g,
-// non déclaré sur le paquet), haricots rouges, lentilles, maïs. Restent
-// estimés : muesli Favrichon, et les calories et protéines du maïs
-// (Ciqual, à recaler sur l'étiquette).
+// non déclaré sur le paquet), haricots rouges, lentilles, maïs. Reste
+// estimé : muesli Favrichon.
 const FIBRE_TARGET=30;
 function fibreOf(f,qty){return f&&f.fibPer100?+(qty*f.fibPer100/100).toFixed(1):0;}
 function fibreDots(g){if(g<0.5)return 0;if(g<1)return 1;if(g<2.5)return 2;if(g<5)return 3;if(g<8)return 4;return 5;}
